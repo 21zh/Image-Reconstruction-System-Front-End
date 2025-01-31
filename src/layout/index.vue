@@ -17,19 +17,23 @@
       <Tabbar />
     </div>
     <!-- 内容主体 -->
-    <div class="layout_main"></div>
+    <div class="layout_main">
+      <Main></Main>
+    </div>
   </div>
 </template>
 
 <script setup>
 // 引入logo组件
-import Logo from '@/layout/logo/index.vue'
+import Logo from '@/layout/logo/index.vue';
 // 引入菜单组件
-import Menu from '@/layout/menu/index.vue'
+import Menu from '@/layout/menu/index.vue';
 // 引入用户仓库
-import userStores from '@/store/modules/user'
+import userStores from '@/store/modules/user';
 // 引入顶部导航栏组件
-import Tabbar from '@/layout/tabbar/index.vue'
+import Tabbar from '@/layout/tabbar/index.vue';
+// 引入主体内容组件
+import Main from '@/layout/main/index.vue';
 
 // 获取用户仓库对象
 let userStore = userStores()
