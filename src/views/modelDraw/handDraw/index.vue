@@ -17,20 +17,21 @@
       <el-card class="tools">
         <el-row :gutter="80">
           <el-col :span="5">
-            <el-slider v-model="penWidth" :format-tooltip="penWidthWatch" :min="1" :max="20"/>
+            <el-slider v-model="penWidth" :format-tooltip="penWidthWatch" :min="1" :max="20" />
           </el-col>
           <el-col :span="4">
-            <el-button size="default" :icon="Delete" @click="clear" :disabled="active!=0">清除</el-button>
+            <el-button size="default" :icon="Delete" @click="clear" :disabled="active != 0">清除</el-button>
           </el-col>
           <el-col :span="4">
             <el-button size="default" :icon="Download">导出</el-button>
           </el-col>
           <el-col :span="4" style="margin-right: 30px;">
-            <el-button size="default" :icon="textFlag ? EditPen : ToiletPaper" @click="penOrErase" :disabled="active!=0">{{ textFlag ? '画笔' :
-              '橡皮擦' }}</el-button>
+            <el-button size="default" :icon="textFlag ? EditPen : ToiletPaper" @click="penOrErase"
+              :disabled="active != 0">{{ textFlag ? '画笔' :
+                '橡皮擦' }}</el-button>
           </el-col>
           <el-col :span="5">
-            <el-slider v-model="eraserWidth" :format-tooltip="eraserWidthWatch" :min="10" :max="100"/>
+            <el-slider v-model="eraserWidth" :format-tooltip="eraserWidthWatch" :min="10" :max="100" />
           </el-col>
         </el-row>
       </el-card>
@@ -39,17 +40,33 @@
       </canvas>
     </el-card>
     <el-card>
-      <canvas class="modelCanvas">
-
-      </canvas>
+      <div class="modelCanvas">
+        <div class="container" ref="container"></div>
+      </div>
     </el-card>
   </div>
 
 </template>
 
 <script setup>
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { init, modelObserve } from '@/utils/showModel';
 import { Back, Right, Delete, Download, ToiletPaper, EditPen } from '@element-plus/icons-vue';
-import { onMounted, ref, computed, nextTick } from 'vue';
+import { onMounted, ref, computed, nextTick, onBeforeUnmount } from 'vue';
+
+let reader = new FileReader();
+const grid_size = 32;
+const cube_size = 10;
+let voxel = [];
+// 视图
+const scene = new THREE.Scene();
+let camera, renderer; // 存储相机和渲染器
+
+// 模型颜色
+let color = ref('#409EFF');
+// 存储模型的容器
+let container = ref();
 
 // 控制步骤的索引
 let active = ref(0);
@@ -70,12 +87,26 @@ let eraserWidth = ref(10);
 // 挂载成功
 onMounted(() => {
   nextTick(() => {
-    initHandCanvas()
+    initHandCanvas();
+    if (container.value) {
+      init(container.value, grid_size, cube_size, scene);
+    }
   })
+})
+
+// 窗口变化函数调用
+const resizeHandler = () => {
+};
+
+// 组件销毁前移除监听事件
+onBeforeUnmount(() => {
 })
 
 // 前进按钮的回调
 const goStep = () => {
+  if (active.value === 2) {
+
+  }
   active.value++;
 };
 // 回退按钮的回调
@@ -226,6 +257,11 @@ const clear = () => {
       width: 100%;
       height: calc(100vh - $base-progress-card-height - 140px);
       background: white;
+    }
+
+    .container {
+      width: 100%;
+      height: 60vh;
     }
   }
 

@@ -1,22 +1,7 @@
-<template>
-
-  <div class="addBrand-container" id="app">
-    <div id='wrapper'>
-      <div id="drop_zone" ref="drop_zone">binvox体素文件</div>
-    </div>
-    <output id="list"></output>
-    <div id='option'>
-      <input id='centering' type='checkbox' checked='checked' v-model="centering"> centering</input>
-    </div>
-    <div class="container" ref="container"></div>
-  </div>
-</template>
-
 <script setup>
-import { ElMessage } from 'element-plus';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { onMounted, ref } from 'vue';
+import { onMounted, render, ref } from 'vue';
 
 let reader = new FileReader();
 let grid_size = 32;  // 全局变量
@@ -54,6 +39,8 @@ const read_binvox = (array_buffer) => {
   if (headerLine !== '#binvox') {
     return Promise.reject(`first line reads ${headerLine} instead of #binvox`);
   }
+  var version = parseInt(lines[0].slice(8), 10);
+  console.log("binvox version: " + version);
 
   // 解析维度信息
   let depth, height, width;
@@ -86,6 +73,7 @@ const read_binvox = (array_buffer) => {
   // 应该是 depth === width === height
   const grid_size = depth;
   console.log('size: ' + `(${depth}, ${width}, ${height})`);
+  // $('#list > .alert').append(`(${depth}, ${width}, ${height})`);
 
   // 读取体素数据
   let idx = 0;
@@ -109,13 +97,11 @@ const read_binvox = (array_buffer) => {
       idx += count;
     }
   }
-  // buf = null;
+  buf = null;
   return Promise.resolve();
 }
 
 const fileLoad = () => {
-  voxel = []; // 清空 voxel 数组
-  console.log(reader.result);
   read_binvox(reader.result).then(() => {
     plot_voxel();
   }).catch((err) => {
@@ -155,9 +141,10 @@ const argmin = (v, w) => {
   return min;
 }
 
+
 // 绘制三维模型
 const plot_voxel = () => {
-  /* // 清除模型残留
+  // 清除模型残留
   if (grid) {
     scene.remove(grid);
   }
@@ -167,18 +154,17 @@ const plot_voxel = () => {
   grid.position.set(0, -cube_size / 2, 0);
   grid.material.color = new THREE.Color(0x000000);
   grid.material.opacity = 0.2;
-  scene.add(grid); */
+  scene.add(grid);
 
-  // 清除旧的 voxel_mesh
+  // 清除
   if (voxel_mesh) {
     scene.remove(voxel_mesh);
     voxel_geo.dispose();
     voxel_mat.dispose();
-    voxel_mesh = null;
   }
 
   // voxel描画
-  voxel_geo = new THREE.Geometry();
+  voxel_geo = new THREE.Geometry;
   let mesh_item = new THREE.Mesh(new THREE.BoxGeometry(cube_size, cube_size, cube_size));
 
   let origin = {
@@ -203,6 +189,7 @@ const plot_voxel = () => {
 
   voxel_mat = new THREE.MeshPhongMaterial({ color: 0xffffff });
   voxel_mesh = new THREE.Mesh(voxel_geo, voxel_mat);
+  console.log(voxel_geo);
   scene.add(voxel_mesh);
   mesh_item = null;
 }
@@ -216,12 +203,16 @@ const handleDragLeave = (evt) => {
   evt.stopPropagation();
   evt.preventDefault();
   evt.dataTransfer.dropEffect = 'copy';
+  // $('#drop_zone').css('background', 'rgb(255,255,255)')
+  drop_zone.value.style.background = 'rgb(255,255,255)';
 }
 
 const handleDragOver = (evt) => {
   evt.stopPropagation();
   evt.preventDefault();
   evt.dataTransfer.dropEffect = 'copy';
+  // $('#drop_zone').css('background', 'rgb(232, 232, 232)')
+  drop_zone.value.style.background = 'rgb(232, 232, 232)';
 }
 
 const handleFileSelect = (evt) => {
@@ -229,8 +220,17 @@ const handleFileSelect = (evt) => {
   evt.preventDefault();
 
   var files = evt.dataTransfer.files; // FileList object.
-  console.log(files[0])
-  reader.readAsArrayBuffer(files[0]);
+  var output = [];
+
+  for (let i = 0, f; f = files[i]; i++) {
+    output.push(`<div class="alert alert-success" role="alert"><strong>${f.name}</strong></div>`);
+  }
+
+  document.getElementById('list').innerHTML = output.join('');
+  let ext = files[0].name.split('.').pop();
+  if (ext === 'binvox') {
+    reader.readAsArrayBuffer(files[0]);
+  }
 }
 
 const init = () => {
@@ -244,6 +244,8 @@ const init = () => {
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(40, width / height, 1, 10000);
   camera.position.set(-20 * grid_size, 7 * grid_size, 20 * grid_size);
+  //camera.position.set(-grid_size * 4, grid_size * 4, grid_size * 4); // 调整视角位置
+
 
   // 光源
   var ambientLight = new THREE.AmbientLight(0x606060);
@@ -267,69 +269,16 @@ const init = () => {
   dropZone.addEventListener('drop', handleFileSelect, false);
   reader.addEventListener('load', fileLoad, false);
 
+  // plot_voxel();
+  // $('#centering').change(() => {
+  //   plot_voxel($('#centering').prop('checked'));
+  // });
+
   animate();
 }
 
 onMounted(() => {
   init();
 });
+
 </script>
-<style lang="scss" scoped>
-.addBrand-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: #fff;
-  padding: 20px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
-  margin: 10px 10px;
-  height: 90vh;
-  max-width: 98%;
-  max-height: 98%;
-}
-
-#wrapper {
-  width: 80%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  margin: 10px auto;
-  background: #fafafa;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-#drop_zone {
-  border: 2px dashed #bbb;
-  -moz-border-radius: 5px;
-  -webkit-border-radius: 5px;
-  border-radius: 5px;
-  padding: 25px;
-  text-align: center;
-  color: #bbb;
-  font-size: 18px;
-  transition: background-color 0.3s ease;
-}
-
-#drop_zone:hover {
-  background-color: #e9ecef;
-}
-
-#list {
-  width: 80%;
-  display: block;
-  margin: 0 auto;
-}
-
-#option {
-  width: 80%;
-  display: block;
-  margin: 0 auto;
-}
-
-.container {
-  width: 90%;
-  height: 80%;
-  margin: 0 auto;
-}
-</style>
