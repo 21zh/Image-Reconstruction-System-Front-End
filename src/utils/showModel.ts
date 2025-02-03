@@ -1,3 +1,4 @@
+import { ElMessage } from 'element-plus';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
@@ -18,7 +19,7 @@ const read_binvox = (
         // 查找换行符
         let newlinePos = buf.indexOf(10, pos);  // 10 是换行符 '\n' 的字节值
         if (c++ > 1000 || newlinePos === -1) {
-            return Promise.reject("error reading header");
+            return ElMessage({ type: 'error', message: '数据解析错误' });
         }
 
         // 从当前 pos 到 newlinePos 解码文本行
@@ -52,7 +53,7 @@ const read_binvox = (
             width = parseInt(line, 10);
             break;
         } else {
-            return Promise.reject(`unrecognized keyword ${line}, skipping`);
+            return ElMessage({ type: 'error', message: '维度信息解析错误' });
         }
     }
     if (depth === void 0) {
@@ -171,15 +172,15 @@ export const modelObserve = (file: any, voxel: any[], scene: any, grid_size: any
             .then(() => {
                 plot_voxel(voxel, scene, grid_size, cube_size, color);
             })
-            .catch((err) => {
-                alert(`Error: ${err}`);
+            .catch((err: any) => {
+                ElMessage({ type: 'error', message: `文件读取失败：${err}` });
             });
     };
 
     // 监听文件读取错误事件
+
     reader.onerror = () => {
-        console.error('文件读取失败:', reader.error);
-        alert(`文件读取失败: ${reader.error}`);
+        ElMessage({ type: 'error', message: '文件读取失败' });
     };
 
     // 开始读取文件

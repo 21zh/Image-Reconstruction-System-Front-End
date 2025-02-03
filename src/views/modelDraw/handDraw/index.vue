@@ -89,7 +89,7 @@ onMounted(() => {
   nextTick(() => {
     initHandCanvas();
     if (container.value) {
-      init(container.value, grid_size, cube_size, scene);
+      init(container.value, grid_size, cube_size, scene,'#409EFF');
     }
   })
 })

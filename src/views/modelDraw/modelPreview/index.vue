@@ -1,6 +1,7 @@
 <template>
   <el-card class="cardBox">
-    <el-upload class="upload-demo" drag multiple v-model="fileLists" :auto-upload="false" :on-change="handleModel" :show-file-list="false" >
+    <el-upload class="upload-demo" drag multiple v-model="fileLists" :auto-upload="false" :on-change="handleModel"
+      :show-file-list="false">
       <el-icon class="el-icon--upload"><upload-filled /></el-icon>
       <div class="el-upload__text">
         拖拽文件或者 <em>点击上传</em>
@@ -10,7 +11,7 @@
           文件类型必须为.binvox
           <div>
             <span style="margin-left: 10px;">模型颜色选择器</span>
-            <el-color-picker v-model="color" style="margin-left: 10px;" @change="changeModelColor"/>
+            <el-color-picker v-model="color" style="margin-left: 10px;" @change="changeModelColor" />
           </div>
         </div>
       </template>
@@ -58,19 +59,29 @@ const checkFile = (file) => {
 
 // 上传文件处理
 const handleModel = (file, fileList) => {
-  if(!file.name.endsWith(".binvox")){
-    return ElMessage({type:'error',message:'文件类型必须为.binvox'});
+  if (!file.name.endsWith(".binvox")) {
+    return ElMessage({ type: 'error', message: '文件类型必须为.binvox' });
   }
   fileLists.value = fileList;
   voxel.length = 0;
-  modelObserve(file, voxel, scene, grid_size, cube_size, reader,color.value);
+  try {
+    modelObserve(file, voxel, scene, grid_size, cube_size, reader, color.value);
+    ElMessage({ type: 'success', message: '模型文件解析成功' });
+  } catch (e) {
+    ElMessage({ type: 'error', message: '模型文件格式错误' });
+  }
 }
 
 // 颜色选择器发送改变，调整模型颜色
-const changeModelColor = () =>{
+const changeModelColor = () => {
   voxel.length = 0;
-  if(fileLists.value.length > 0){
-    modelObserve(fileLists.value[fileLists.value.length - 1], voxel, scene, grid_size, cube_size, reader,color.value);
+  if (fileLists.value.length > 0) {
+    try {
+      modelObserve(fileLists.value[fileLists.value.length - 1], voxel, scene, grid_size, cube_size, reader, color.value);
+      ElMessage({ type: 'success', message: '模型颜色已改变' });
+    } catch (e) {
+      ElMessage({ type: 'error', message: '模型颜色改变错误' });
+    }
   }
 }
 </script>
