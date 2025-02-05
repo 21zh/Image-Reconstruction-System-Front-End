@@ -30,11 +30,15 @@
         <template #="{ row, $index }">
           <el-button type="primary" size="small" :icon="View" @click="showModel(row)">查看</el-button>
           <el-button type="success" size="small" :icon="Download">下载</el-button>
-          <el-button type="danger" size="small" :icon="Delete">删除</el-button>
+          <el-popconfirm title="您确定要删除该数据吗?" width="200">
+            <template #reference>
+              <el-button type="danger" size="small" :icon="Delete">删除</el-button>
+            </template>
+          </el-popconfirm>
         </template>
       </el-table-column>
       <template #empty>
-          <el-empty description="" style="height: 50vh;"/>
+        <el-empty description="" style="height: 50vh;" />
       </template>
     </el-table>
   </el-card>
@@ -45,7 +49,8 @@
       </el-card>
       <el-card class="model">
         <div class="container" ref="container">
-          <Models v-if="container" :container="container" :grid_size="grid_size" :cube_size="cube_size" :scene="scene" />
+          <Models v-if="container" :container="container" :grid_size="grid_size" :cube_size="cube_size"
+            :scene="scene" />
         </div>
       </el-card>
     </div>
@@ -76,6 +81,9 @@ let container = ref();
 // 查询数据
 let keyPicture = ref('');
 
+// 上传的文件
+let fileLists = ref([]);
+
 // 虚拟数据
 let data = ref([
   {
@@ -101,8 +109,11 @@ const showModel = (row) => {
 }
 
 onMounted(() => {
-  // init();
 });
+
+// 处理上传的文件回调
+const handleModel = () => {
+}
 </script>
 <style lang="scss" scoped>
 .cardBox {

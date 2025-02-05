@@ -15,7 +15,7 @@ let userStores = defineStore('User', {
       // 密码
       password: '',
       // 头像
-      avatar: '',
+      avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
       // 路由数据
       menuRoutes: constantRoute,
     }

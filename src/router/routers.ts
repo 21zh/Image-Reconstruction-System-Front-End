@@ -184,7 +184,7 @@ export const constantRoute = [
   },
   {
     // 默认路由
-    path: '/pathMatch(.*)*',
+    path: '/:pathMatch(.*)*',
     redirect: '/404',
     name: 'Any',
     meta: {

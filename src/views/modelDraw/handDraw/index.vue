@@ -1,14 +1,16 @@
 <template>
   <el-card class="processBox">
-    <el-steps style="width: 800px" :active="active" finish-status="success" align-center="true">
+    <el-steps style="width: 800px" :active="active" finish-status="success" :align-center="true">
       <el-step title="手绘图像" />
       <el-step title="确认图像" />
       <el-step title="构建模型" />
       <el-step title="导出模型" />
     </el-steps>
     <div class="btnContainer">
-      <el-button type="success" size="default" :icon="Back" @click="backStep" :disabled="active == 0">回退</el-button>
+      <el-button type="danger" size="default" :icon="Back" @click="backStep" :disabled="active == 0">回退</el-button>
       <el-button type="primary" size="default" :icon="Right" @click="goStep" :disabled="active == 3">前进</el-button>
+      <el-button type="success" size="default" :icon="Download" @click="downloads"
+        :disabled="active != 3">下载</el-button>
     </div>
 
   </el-card>
@@ -20,15 +22,20 @@
             <el-slider v-model="penWidth" :format-tooltip="penWidthWatch" :min="1" :max="20" />
           </el-col>
           <el-col :span="4">
-            <el-button size="default" :icon="Delete" @click="clear" :disabled="active != 0">清除</el-button>
+            <el-popconfirm title="您确定要清除图像吗?" @confirm="clear" width="200">
+              <template #reference>
+                <el-button size="default" :icon="Delete" :disabled="active != 0">清除</el-button>
+              </template>
+            </el-popconfirm>
           </el-col>
           <el-col :span="4">
             <el-button size="default" :icon="Download">导出</el-button>
           </el-col>
           <el-col :span="4" style="margin-right: 30px;">
             <el-button size="default" :icon="textFlag ? EditPen : ToiletPaper" @click="penOrErase"
-              :disabled="active != 0">{{ textFlag ? '画笔' :
-                '橡皮擦' }}</el-button>
+              :disabled="active != 0">{{
+                textFlag ? '画笔' :
+                  '橡皮擦' }}</el-button>
           </el-col>
           <el-col :span="5">
             <el-slider v-model="eraserWidth" :format-tooltip="eraserWidthWatch" :min="10" :max="100" />
@@ -58,6 +65,7 @@ import { init, modelObserve } from '@/utils/showModel';
 import { Back, Right, Delete, Download, ToiletPaper, EditPen } from '@element-plus/icons-vue';
 import { onMounted, ref, computed, nextTick, onBeforeUnmount } from 'vue';
 import Models from '@/views/models/index.vue';
+import { ElMessage } from 'element-plus';
 
 let reader = new FileReader();
 const grid_size = 32;
@@ -105,8 +113,21 @@ onBeforeUnmount(() => {
 
 // 前进按钮的回调
 const goStep = () => {
-  if (active.value === 2) {
-
+  if (active.value === 0) {
+    ElMessage({
+      type: 'success',
+      message: '手绘图像成功，进入下一步'
+    })
+  } else if (active.value === 1) {
+    ElMessage({
+      type: 'success',
+      message: '成功确认图像，进入下一步'
+    })
+  } else {
+    ElMessage({
+      type: 'success',
+      message: '构建模型成功'
+    })
   }
   active.value++;
 };
@@ -201,6 +222,11 @@ const clear = () => {
   let hCanvas = document.getElementById('myCanvas');
   hCanvas.width = hCanvas.offsetWidth;
   hCanvas.height = hCanvas.offsetHeight;
+}
+
+// 下载模型
+const downloads = () => {
+  console.log('成功下载');
 }
 
 </script>

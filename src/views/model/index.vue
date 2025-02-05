@@ -14,48 +14,25 @@
     </el-segmented>
   </el-card>
   <div class="card-container">
-    <el-card class="modelContainer">
-      <img src="@/assets/images/loginbg.gif" alt="">
-      <el-button>下载</el-button>
-    </el-card>
-    <el-card class="modelContainer">
-      <img src="@/assets/images/loginbg.gif" alt="">
-      <el-button>下载</el-button>
-    </el-card>
-    <el-card class="modelContainer">
-      <img src="@/assets/images/loginbg.gif" alt="">
-      <el-button>下载</el-button>
-    </el-card>
-    <el-card class="modelContainer">
-      <img src="@/assets/images/loginbg.gif" alt="">
-      <el-button>下载</el-button>
-    </el-card>
-    <el-card class="modelContainer">
-      <img src="@/assets/images/loginbg.gif" alt="">
-      <el-button>下载</el-button>
-    </el-card>
-    <el-card class="modelContainer">
-      <img src="@/assets/images/loginbg.gif" alt="">
-      <el-button>下载</el-button>
-    </el-card>
-    <el-card class="modelContainer">
-      <img src="@/assets/images/loginbg.gif" alt="">
-      <el-button>下载</el-button>
-    </el-card>
-    <el-card class="modelContainer">
-      <img src="@/assets/images/loginbg.gif" alt="">
-      <el-button>下载</el-button>
-    </el-card>
-    <el-card class="modelContainer">
+    <el-card class="modelContainer" @click="showModel" v-for="item in 10">
       <img src="@/assets/images/loginbg.gif" alt="">
       <el-button>下载</el-button>
     </el-card>
   </div>
+  <el-dialog v-model="modelView" title="三维模型预览" width="1000" align-center>
+    <div class="container" ref="container">
+      <Models v-if="container" :container="container" :grid_size="grid_size" :cube_size="cube_size" :scene="scene" />
+    </div>
+  </el-dialog>
+
 </template>
 
 <script setup>
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { onMounted, ref } from 'vue'
-
+import Models from '@/views/models/index.vue';
+import { init, modelObserve } from '@/utils/showModel';
 import {
   Apple,
   Cherry,
@@ -65,7 +42,16 @@ import {
   Watermelon,
 } from '@element-plus/icons-vue'
 
-const value = ref('Apple')
+const grid_size = 32;
+const cube_size = 10;
+let voxel = [];
+// 视图
+const scene = new THREE.Scene();
+const value = ref('Apple');
+// 模型容纳容器
+let container = ref();
+// 控制对话框是否显示
+let modelView = ref(false);
 
 const options = [
   {
@@ -99,9 +85,19 @@ const options = [
     icon: Watermelon,
   },
 ];
+
+// 展示模型数据
+const showModel = () => {
+  modelView.value = true;
+}
 </script>
 
 <style lang="scss" scoped>
+.container{
+  width: 100%;
+  height: 700px;
+}
+
 .segment-item {
   display: flex;
   flex-direction: column;
@@ -113,29 +109,24 @@ const options = [
 
 .segment-item:hover {
   background-color: rgba(64, 158, 255, 0.1);
-  /* 悬停背景色 */
   border-radius: 8px;
 }
 
 .active-icon {
   color: #409EFF;
-  /* 选中图标颜色 */
 }
 
 .inactive-icon {
   color: #606266;
-  /* 未选中图标颜色 */
 }
 
 .active-label {
   color: #409EFF;
-  /* 选中文字颜色 */
   font-weight: 500;
 }
 
 .inactive-label {
   color: #606266;
-  /* 未选中文字颜色 */
 }
 
 .card-container {
@@ -152,6 +143,7 @@ const options = [
   overflow: hidden;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
 }
 
 .modelContainer:hover {

@@ -9,6 +9,8 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
+
 
 // 接收父组件传递的图片数据
 let props = defineProps({
@@ -17,6 +19,7 @@ let props = defineProps({
         required:true
     }
 });
+
 </script>
 
 <script>

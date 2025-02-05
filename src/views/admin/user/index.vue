@@ -20,7 +20,11 @@
           <el-button type="primary" size="small" :icon="Stamp">{{ row.roleId ? '授权' : '夺权' }}</el-button>
           <el-button type="primary" size="small" :icon="View" @click="showUser(row)">查看</el-button>
           <el-button type="primary" size="small" :icon="Edit" @click="editUser(row)">编辑</el-button>
-          <el-button type="primary" size="small" :icon="Delete">删除</el-button>
+          <el-popconfirm title="您确定要删除该用户吗?" width="200">
+            <template #reference>
+              <el-button type="primary" size="small" :icon="Delete">删除</el-button>
+            </template>
+          </el-popconfirm>
         </template>
       </el-table-column>
     </el-table>
