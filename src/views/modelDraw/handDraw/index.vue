@@ -41,7 +41,10 @@
     </el-card>
     <el-card>
       <div class="modelCanvas">
-        <div class="container" ref="container"></div>
+        <div class="container" ref="container">
+          <Models v-if="container" :container="container" :grid_size="grid_size" :cube_size="cube_size"
+            :scene="scene" />
+        </div>
       </div>
     </el-card>
   </div>
@@ -54,6 +57,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { init, modelObserve } from '@/utils/showModel';
 import { Back, Right, Delete, Download, ToiletPaper, EditPen } from '@element-plus/icons-vue';
 import { onMounted, ref, computed, nextTick, onBeforeUnmount } from 'vue';
+import Models from '@/views/models/index.vue';
 
 let reader = new FileReader();
 const grid_size = 32;
@@ -88,9 +92,6 @@ let eraserWidth = ref(10);
 onMounted(() => {
   nextTick(() => {
     initHandCanvas();
-    if (container.value) {
-      init(container.value, grid_size, cube_size, scene,'#409EFF');
-    }
   })
 })
 

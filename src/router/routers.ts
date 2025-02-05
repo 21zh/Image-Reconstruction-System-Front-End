@@ -49,7 +49,7 @@ export const constantRoute = [
       hidden: false,
       icon: 'Compass',
     },
-    redirect: '/modelDrawing/handDraw',
+    redirect: '/modelDraw/handDraw',
     children: [
       // 手绘重构
       {
@@ -106,20 +106,20 @@ export const constantRoute = [
         meta: {
           title: '角色管理',
           hidden: false,
-          icon: 'UserFilled',
+          icon: 'User',
         },
-      },
-      {
-        // 数据大屏
-        path: '/admin/screen',
-        component: () => import('@/views/admin/screen/index.vue'),
-        name: 'screen',
-        meta: {
-          title: '数据大屏',
-          hidden: false,
-          icon: 'DataBoard',
-        },
-      },
+      }
+      // {
+      //   // 数据大屏
+      //   path: '/admin/screen',
+      //   component: () => import('@/views/admin/screen/index.vue'),
+      //   name: 'screen',
+      //   meta: {
+      //     title: '数据大屏',
+      //     hidden: false,
+      //     icon: 'DataBoard',
+      //   },
+      // },
     ],
   },
   {

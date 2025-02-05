@@ -33,6 +33,9 @@
           <el-button type="danger" size="small" :icon="Delete">删除</el-button>
         </template>
       </el-table-column>
+      <template #empty>
+          <el-empty description="" style="height: 50vh;"/>
+      </template>
     </el-table>
   </el-card>
   <el-dialog v-model="modelView" title="三维模型预览" width="1500" align-center>
@@ -41,7 +44,9 @@
         <img src="@/assets/images/loginbg.gif" alt="">
       </el-card>
       <el-card class="model">
-        <div class="container" ref="container"></div>
+        <div class="container" ref="container">
+          <Models v-if="container" :container="container" :grid_size="grid_size" :cube_size="cube_size" :scene="scene" />
+        </div>
       </el-card>
     </div>
   </el-dialog>
@@ -50,10 +55,11 @@
 <script setup>
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { Picture, View, Delete ,Download} from '@element-plus/icons-vue';
+import { Picture, View, Delete, Download } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
-import { onMounted, ref ,watch} from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { init, modelObserve } from '@/utils/showModel';
+import Models from '@/views/models/index.vue';
 
 let reader = new FileReader();
 const grid_size = 32;
@@ -71,130 +77,23 @@ let container = ref();
 let keyPicture = ref('');
 
 // 虚拟数据
-let data = [
+let data = ref([
   {
     id: 1,
-    name: '模型1',
-    size: '1000',
+    name: '3D模型',
+    img: 'https://img.alicdn.com/imgextra/i4/O1CN01KX2jqB1K5YJ8YJ1YH_!!6000000000080-2-tps-800-800.png',
+    time: '2023-06-01',
   },
-  {
-    id: 2,
-    name: '模型2',
-    size: '2000',
-  },
-  ,
-  {
-    id: 2,
-    name: '模型2',
-    size: '2000',
-  },
-  {
-    id: 2,
-    name: '模型2',
-    size: '2000',
-  },
-  {
-    id: 2,
-    name: '模型2',
-    size: '2000',
-  },
-  {
-    id: 2,
-    name: '模型2',
-    size: '2000',
-  },
-  {
-    id: 2,
-    name: '模型2',
-    size: '2000',
-  },
-  {
-    id: 2,
-    name: '模型2',
-    size: '2000',
-  },
-  {
-    id: 2,
-    name: '模型2',
-    size: '2000',
-  },
-  {
-    id: 2,
-    name: '模型2',
-    size: '2000',
-  },
-  {
-    id: 2,
-    name: '模型2',
-    size: '2000',
-  },
-  {
-    id: 2,
-    name: '模型2',
-    size: '2000',
-  },
-  {
-    id: 2,
-    name: '模型2',
-    size: '2000',
-  },
-  {
-    id: 2,
-    name: '模型2',
-    size: '2000',
-  },
-  {
-    id: 2,
-    name: '模型2',
-    size: '2000',
-  },
-  {
-    id: 2,
-    name: '模型2',
-    size: '2000',
-  },
-  {
-    id: 2,
-    name: '模型2',
-    size: '2000',
-  },
-  {
-    id: 2,
-    name: '模型2',
-    size: '2000',
-  },
-  {
-    id: 2,
-    name: '模型2',
-    size: '2000',
-  },
-  {
-    id: 2,
-    name: '模型2',
-    size: '2000',
-  },
-  {
-    id: 2,
-    name: '模型2',
-    size: '2000',
-  },
-  {
-    id: 2,
-    name: '模型2',
-    size: '2000',
-  }
-]
+]);
 
 onMounted(() => {
 })
 
-watch(container, (newValue) => {
-  if (newValue) {
-    init(container.value, grid_size, cube_size, scene,'#409EFF');
-  }
-});
-
-
+// watch(container, (newValue) => {
+//   if (newValue) {
+//     init(container.value, grid_size, cube_size, scene, '#409EFF');
+//   }
+// });
 
 // 查看按钮的回调
 const showModel = (row) => {
@@ -214,7 +113,7 @@ onMounted(() => {
 
 .modelTable {
   width: 100%;
-  height: 600px;
+  height: 610px;
 
   .table {
     width: 100%;

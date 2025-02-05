@@ -1,67 +1,29 @@
 <template>
   <div class="login_container">
-    <el-form
-      class="login_form"
-      :rules="rules"
-      :model="loginForm"
-      ref="loginForms"
-    >
+    <el-form class="login_form" :rules="rules" :model="loginForm" ref="loginForms">
       <h1>图像重构三维模型</h1>
       <el-form-item prop="username">
-        <el-input
-          placeholder="请输入用户名"
-          :prefix-icon="User"
-          v-model="loginForm.username"
-        ></el-input>
+        <el-input placeholder="请输入用户名" :prefix-icon="User" v-model="loginForm.username"></el-input>
       </el-form-item>
       <el-form-item prop="password">
-        <el-input
-          type="password"
-          placeholder="请输入密码"
-          :prefix-icon="Key"
-          show-password
-          v-model="loginForm.password"
-        ></el-input>
+        <el-input type="password" placeholder="请输入密码" :prefix-icon="Key" show-password
+          v-model="loginForm.password"></el-input>
       </el-form-item>
-      <el-button
-        class="login_btn"
-        type="primary"
-        size="default"
-        :loading="isLoading"
-        :disabled="loginForm.username == '' || loginForm.password == ''"
-        @click="login"
-      >
+      <el-button class="login_btn" type="primary" size="default" :loading="isLoading"
+        :disabled="loginForm.username == '' || loginForm.password == ''" @click="login">
         登录
       </el-button>
     </el-form>
     <!-- 绑定手机的对话框 -->
-    <el-dialog
-      v-model="centerDialogVisible"
-      title="手机号码绑定"
-      width="500"
-      align-center
-    >
+    <el-dialog v-model="centerDialogVisible" title="手机号码绑定" width="500" align-center>
       <el-form :model="phoneForm" :rules="rules" ref="phoneForms">
         <el-form-item prop="phone">
-          <el-input
-            placeholder="请输入手机号码"
-            :prefix-icon="Iphone"
-            v-model="phoneForm.phone"
-          ></el-input>
+          <el-input placeholder="请输入手机号码" :prefix-icon="Iphone" v-model="phoneForm.phone"></el-input>
         </el-form-item>
         <el-form-item>
-          <el-input
-            placeholder="请输入验证码"
-            :prefix-icon="Key"
-            style="width: 350px; margin-right: 10px"
-            v-model="phoneForm.code"
-          ></el-input>
-          <el-button
-            type="success"
-            size="default"
-            @click="sendCode"
-            :disabled="isSendCodeButtonDisabled"
-          >
+          <el-input placeholder="请输入验证码" :prefix-icon="Key" style="width: 350px; margin-right: 10px"
+            v-model="phoneForm.code"></el-input>
+          <el-button type="success" size="default" @click="sendCode" :disabled="isSendCodeButtonDisabled">
             {{ buttonText }}
           </el-button>
         </el-form-item>
@@ -69,11 +31,7 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="centerDialogVisible = false">取消</el-button>
-          <el-button
-            type="primary"
-            @click="addPhone"
-            :disabled="phoneForm.phone == '' || phoneForm.code == ''"
-          >
+          <el-button type="primary" @click="addPhone" :disabled="phoneForm.phone == '' || phoneForm.code == ''">
             确定
           </el-button>
         </div>
