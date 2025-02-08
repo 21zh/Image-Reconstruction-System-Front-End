@@ -21,7 +21,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
+import userStores from '@/store/modules/user';
+
+// 获取用户仓库
+let userStore = userStores();
 
 // 图片数组
 let imgList = ref([
@@ -30,6 +34,12 @@ let imgList = ref([
   '/public/autumn.png',
   '/public/winter.png'
 ]);
+
+// 组件加载成功，请求获取用户数据
+onMounted(() => {
+  // 发送请求
+  userStore.userPart();
+});
 </script>
 
 <style lang="scss" scoped>

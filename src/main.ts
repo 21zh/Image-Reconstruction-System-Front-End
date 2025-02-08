@@ -19,6 +19,8 @@ import router from '@/router'
 import pinia from '@/store'
 // 暗黑模式的样式
 import 'element-plus/theme-chalk/dark/css-vars.css'
+// 引入路由鉴权文件
+import './permission';
 // 获取应用实例对象
 const app = createApp(App)
 app.use(ElementPlus, {

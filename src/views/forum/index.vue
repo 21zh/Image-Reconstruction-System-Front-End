@@ -71,7 +71,7 @@
     <div class="topContainer">
       <div class="userContainer" @click="searchUser" style="cursor:pointer">
         <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" />
-        <span class="username">用户</span>
+        <span class="userName">用户</span>
       </div>
       <div class="likeAndDownload">
         <el-badge :value="allLike" :max="999" class="item">

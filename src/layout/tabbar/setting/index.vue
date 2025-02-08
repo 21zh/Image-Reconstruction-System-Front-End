@@ -17,14 +17,14 @@
   <!-- 下拉菜单 -->
   <el-dropdown>
     <span class="el-dropdown-link">
-      {{ userStore.username }}
+      {{ userStore.userName }}
       <el-icon class="el-icon--right">
         <arrow-down />
       </el-icon>
     </span>
     <template #dropdown>
       <el-dropdown-menu>
-        <el-dropdown-item>退出登录</el-dropdown-item>
+        <el-dropdown-item @click="layout">退出登录</el-dropdown-item>
       </el-dropdown-menu>
     </template>
   </el-dropdown>
@@ -35,6 +35,7 @@ import {ref} from 'vue';
 // 引入用户仓库
 import userStores from '@/store/modules/user';
 import LayOutSettingStore from '@/store/modules/setting';
+import { useRoute ,useRouter} from 'vue-router';
 // 获取用户的对象
 let userStore = userStores();
 // 获取仓库对象
@@ -42,6 +43,8 @@ let layoutSettingStore = LayOutSettingStore();
 
 // 收集开关的数据
 let dark = ref(false);
+// 路由对象
+let $router = useRouter();
 
 // 刷新按钮点击回调
 const updateRresh = () => {
@@ -68,6 +71,13 @@ const changeDark = () => {
     let html = document.documentElement;
     // 判断html标签是否有类目dark
     dark.value ? html.className = 'dark' : html.className = '';
+}
+
+// 退出登录按钮的回调
+const layout = async()=>{
+  await userStore.logout();
+  // 进行路由跳转
+  $router.push('/login');
 }
 </script>
 <script>

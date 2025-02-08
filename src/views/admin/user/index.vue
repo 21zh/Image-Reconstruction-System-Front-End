@@ -33,8 +33,8 @@
   </el-card>
   <el-dialog v-model="userDialogVisible" :title="userParams.id ? '修改用户' : '添加用户'" align-center>
     <el-form label-width="80px" :rules="rules" :model="userParams">
-      <el-form-item label="用户名" prop="username">
-        <el-input placeholder="请你输入用户名" v-model="userParams.username"
+      <el-form-item label="用户名" prop="userName">
+        <el-input placeholder="请你输入用户名" v-model="userParams.userName"
           :disabled="userParams.id ? true : false"></el-input>
       </el-form-item>
       <el-form-item label="密码" prop="password">
@@ -86,7 +86,7 @@ import { ref } from 'vue';
 // 用户表单数据
 let userParams = ref({
   id: 0,
-  username: '',
+  userName: '',
   password: '',
   phone: '',
   role: '',
@@ -230,7 +230,7 @@ let userDialogVisible = ref(false);
 let userInfoDialogVisible = ref(false);
 
 // 用户名称校验
-const validatorUserName = (rule, value, callback) => {
+const validatoruserName = (rule, value, callback) => {
   if (value.trim().length < 5) {
     // 用户名长度不能小于5
     callback(new Error('用户名长度不能小于5位'))
@@ -266,7 +266,7 @@ const validatorPhone = (rule, value, callback) => {
 
 // 定义表单校验规则
 const rules = {
-  username: [{ required: true, trigger: 'blur', validator: validatorUserName }],
+  userName: [{ required: true, trigger: 'blur', validator: validatoruserName }],
   password: [{ required: true, trigger: 'blur', validator: validatorPassword }],
   phone: [{ required: true, trigger: 'blur', validator: validatorPhone }],
 }
