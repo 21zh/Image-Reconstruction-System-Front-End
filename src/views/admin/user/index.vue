@@ -397,8 +397,10 @@ const addOrUpdateUser = async () => {
 const beforeAvatarUpload = (file) => {
   if (file.type !== 'image/jpeg' && file.type !== 'image/png' && file.type !== 'image/gif') {
     ElMessage.error('上传头像图片只能是 JPG/PNG/GIF 格式!');
+    return false;
   } else if (file.size > 1024 * 1024 * 2) {
     ElMessage.error('上传头像图片大小不能超过 2MB!');
+    return false;
   }
   return true;
 }

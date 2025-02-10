@@ -44,6 +44,7 @@ import {
 import { reqGetAllType } from '../../api/type';
 import { ElMessage } from 'element-plus';
 import { reqGetTypeModel } from '../../api/model';
+import { fileDownload } from '../../utils/fileDownload';
 
 let reader = new FileReader();
 const grid_size = 32;
@@ -51,6 +52,7 @@ const cube_size = 10;
 let voxel = [];
 // 视图
 const scene = new THREE.Scene();
+// 类型id
 let typeId = ref(0);
 // 模型容纳容器
 let container = ref();
@@ -62,8 +64,6 @@ let options = ref([]);
 
 // 模型数据
 let modelData = ref([]);
-
-let imageValue = ref('');
 
 // 组件挂载成功，获取所有的类型
 onMounted(() => {
@@ -126,38 +126,8 @@ const downloadModel = async(row) => {
   let imageUrl = row.image;
   let modelUrl = row.model;
 
-  // 发请求下载图像和模型
-  try{
-    const imageResponse = await fetch(imageUrl);
-    const modelResponse = await fetch(modelUrl);
-
-    if (!imageResponse.ok || !modelResponse.ok){
-      ElMessage.error("下载失败");
-    }
-
-    // 获取文件的blob数据
-    const imageBlob = await imageResponse.blob();
-    const modelBlob = await modelResponse.blob();
-
-    // 创建url分别指向文件
-    const imageLink = document.createElement('a');
-    const modelLink = document.createElement('a');
-
-    imageLink.href = URL.createObjectURL(imageBlob);
-    modelLink.href = URL.createObjectURL(modelBlob);
-    imageLink.download = 'image.png';
-    modelLink.download = 'model.binvox';
-
-    // 触发点击事件
-    imageLink.click();
-    modelLink.click();
-
-    // 释放blob的url
-    URL.revokeObjectURL(imageLink.href);
-    URL.revokeObjectURL(modelLink.href);
-  }catch(error){
-    ElMessage.error("下载失败");
-  }
+  // 下载图像和模型数据
+  fileDownload(imageUrl, modelUrl);
 }
 
 </script>

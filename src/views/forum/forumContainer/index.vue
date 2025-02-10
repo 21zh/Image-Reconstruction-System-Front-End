@@ -1,19 +1,19 @@
 <template>
   <ul class="infinite-list" style="overflow: auto">
-    <div class="article" v-for="item in 20" @click="showArticle">
+    <div class="article" v-for="(item, index) in props.forumList" :key="item.id" @click="showArticle(item)">
       <div class="leftContainer">
-        <h1>这是一个binvox文件</h1>
+        <h1>{{ item.title }}</h1>
         <div class="userContainer" @click.stop="searchUser" style="cursor:pointer">
-          <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"/>
-          <span class="userName">用户</span>
+          <el-avatar :src=item.avatar />
+          <span class="userName">{{ item.userName }}</span>
         </div>
       </div>
       <div class="rightContainer">
-        <el-badge :value="like" :max="999" class="item">
-          <svg-icon name="like" width="25px" height="25px" @click.stop="likeClick"></svg-icon>
+        <el-badge :value="item.likes" :max="999" class="item">
+          <svg-icon :name="!item.ilike?'unLike':'like'" width="25px" height="25px" @click.stop="likeClick(item)"></svg-icon>
         </el-badge>
-        <el-badge :value="download" :max="999" class="item">
-          <svg-icon name="download" width="25px" height="25px" @click.stop="downloadClick"></svg-icon>
+        <el-badge :value="item.downloads" :max="999" class="item">
+          <svg-icon name="download" width="25px" height="25px" @click.stop="downloadClick(item)"></svg-icon>
         </el-badge>
       </div>
     </div>
@@ -23,24 +23,83 @@
 <script setup>
 import { ElMessage } from 'element-plus';
 import { ref } from 'vue';
-let count = ref(10);
+import SockJS from 'sockjs-client';
+import Stomp from 'stompjs';
+import { fileDownload } from '../../../utils/fileDownload';
 
-// 点赞数
-let like = ref(999);
-// 下载数
-let download = ref(999);
+// 配置websocket端点
+let socket = new SockJS(import.meta.env.VITE_SERVE + '/ws');
+let stompClient = Stomp.over(socket);
+
+// 连接websocket实时更新点赞和下载
+stompClient.connect({}, () => {
+  stompClient.subscribe('/forum/likes', (likeMap) => {
+    // 解析对象
+    let updateLikes = JSON.parse(likeMap.body);
+    // 查找对应的帖子
+    let post = props.forumList.find(item => item.id === updateLikes.id);
+    // 存在，更新
+    if (post) {
+      // 更新点赞数
+      post.likes = updateLikes.likes;
+      post.ilike = !post.ilike;
+    }
+
+  });
+  stompClient.subscribe('/forum/downloads', (downloadMap) => {
+    // 解析对象
+    let updateDownloads = JSON.parse(downloadMap.body);
+    // 查找对应的帖子
+    let post = props.forumList.find(item => item.id === updateDownloads.id);
+    // 存在，更新
+    if (post) {
+      // 更新下载量
+      post.downloads = updateDownloads.downloads;
+    }
+  });
+});
+
+// 接收父组件传递过来的帖子数据
+const props = defineProps({
+  forumList: {
+    type: Array,
+    required: true,
+    default: () => [],
+    validator: (value) => {
+      return value.every(item =>
+        typeof item.id === 'number' &&
+        typeof item.typeId === 'number' &&
+        typeof item.userId === 'number' &&
+        typeof item.title === 'string' &&
+        typeof item.image === 'string' &&
+        typeof item.model === 'string' &&
+        typeof item.likes === 'number' &&
+        typeof item.downloads === 'number' &&
+        typeof item.userName === 'string' &&
+        typeof item.avatar === 'string' &&
+        typeof item.motto === 'string' &&
+        typeof item.createTime === 'string' &&
+        typeof item.updateTime === 'string'&&
+        typeof item.ilike === 'boolean'
+      )
+    }
+  }
+});
 
 // 获取父组件的方法
-let $emit = defineEmits(['showUserInfo','showArticle']);
+let $emit = defineEmits(['showUserInfo', 'showArticle']);
 
 // 点赞或者取消点赞
-const likeClick = () => {
-  ElMessage.success('点赞成功');
+const likeClick = (item) => {
+  const Message = JSON.stringify({id: item.id,userId:item.userId,action: 'likes',iLike:item.ilike});
+  stompClient.send('/forum/update', {}, Message);
 }
 
 // 下载
-const downloadClick = () => {
-  ElMessage.success('下载成功');
+const downloadClick = (item) => {
+  const Message = JSON.stringify({id: item.id,action: 'downloads'});
+  stompClient.send('/forum/update', {}, Message);
+  fileDownload(item.image,item.model);
 }
 
 // 查看用户按钮的回调
@@ -49,8 +108,8 @@ const searchUser = () => {
 }
 
 // 查看帖子内容
-const showArticle = () =>{
-  $emit('showArticle');
+const showArticle = (item) => {
+  $emit('showArticle',item);
 }
 
 
