@@ -1,10 +1,10 @@
 <template>
   <el-card style="position: sticky; top: 0; z-index: 1000; margin-bottom: 20px;">
-    <el-segmented v-model="value" :options="options" block>
+    <el-segmented v-model="typeId" :options="formattedOptions" block @change="getTypeModel">
       <template #default="scope">
         <div class="segment-item">
           <el-icon size="24" :class="scope.isActive ? 'active-icon' : 'inactive-icon'">
-            <component :is="scope.item.icon" />
+            <img :src=scope.item.iconUrl alt="">
           </el-icon>
           <div :class="scope.isActive ? 'active-label' : 'inactive-label'">
             {{ scope.item.label }}
@@ -14,9 +14,9 @@
     </el-segmented>
   </el-card>
   <div class="card-container">
-    <el-card class="modelContainer" @click="showModel" v-for="item in 10">
-      <img src="@/assets/images/loginbg.gif" alt="">
-      <el-button>下载</el-button>
+    <el-card class="modelContainer" @click="showModel(row)" v-for="(row, $index) in modelData" :key="index">
+      <img :src=row.image alt="">
+      <el-button @click.stop="downloadModel(row)">下载</el-button>
     </el-card>
   </div>
   <el-dialog v-model="modelView" title="三维模型预览" width="1000" align-center>
@@ -30,7 +30,7 @@
 <script setup>
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import Models from '@/views/models/index.vue';
 import { init, modelObserve } from '@/utils/showModel';
 import {
@@ -41,59 +41,129 @@ import {
   Pear,
   Watermelon,
 } from '@element-plus/icons-vue'
+import { reqGetAllType } from '../../api/type';
+import { ElMessage } from 'element-plus';
+import { reqGetTypeModel } from '../../api/model';
 
+let reader = new FileReader();
 const grid_size = 32;
 const cube_size = 10;
 let voxel = [];
 // 视图
 const scene = new THREE.Scene();
-const value = ref('Apple');
+let typeId = ref(0);
 // 模型容纳容器
 let container = ref();
 // 控制对话框是否显示
 let modelView = ref(false);
 
-const options = [
-  {
-    label: 'Apple',
-    value: 'Apple',
-    icon: Apple,
-  },
-  {
-    label: 'Cherry',
-    value: 'Cherry',
-    icon: Cherry,
-  },
-  {
-    label: 'Grape',
-    value: 'Grape',
-    icon: Grape,
-  },
-  {
-    label: 'Orange',
-    value: 'Orange',
-    icon: Orange,
-  },
-  {
-    label: 'Pear',
-    value: 'Pear',
-    icon: Pear,
-  },
-  {
-    label: 'Watermelon',
-    value: 'Watermelon',
-    icon: Watermelon,
-  },
-];
+// 所有的类型数据
+let options = ref([]);
+
+// 模型数据
+let modelData = ref([]);
+
+let imageValue = ref('');
+
+// 组件挂载成功，获取所有的类型
+onMounted(() => {
+  // 获取所有的类型
+  getAllType();
+  // 获取类型下的模型数据
+  getTypeModel(typeId.value);
+})
+
+// 数据映射
+const formattedOptions = computed(() => {
+  return options.value.map((item) => {
+    return {
+      label: item.typeName,
+      value: item.id,
+      iconUrl: item.iconUrl
+    };
+  });
+});
+
+// 获取所有的类型数据
+const getAllType = async () => {
+  // 发请求
+  let result = await reqGetAllType();
+  // 请求成功
+  if (result.code == 200) {
+    // 将类型数据进行存储
+    options.value = result.data;
+  }
+}
 
 // 展示模型数据
-const showModel = () => {
+const showModel = async (row) => {
+  // 清空模型数据
+  voxel.length = 0;
+  // 显示对话框
   modelView.value = true;
+  // 发送请求，解析模型数据
+  let response = await fetch(row.model);
+  // 解析并创建文件对象
+  let blob = await response.blob();
+  const file = new File([blob], row.model, {
+    type: 'application/octet-stream',
+  });
+  modelObserve(file, voxel, scene, grid_size, cube_size, reader, '#26CB1D');
 }
+
+// 获取类型下的模型数据
+const getTypeModel = async (id) => {
+  // 发起请求
+  let result = await reqGetTypeModel(id);
+  // 成功
+  if (result.code == 200) {
+    modelData.value = result.data;
+  }
+}
+
+// 下载模型和图像数据
+const downloadModel = async(row) => {
+  let imageUrl = row.image;
+  let modelUrl = row.model;
+
+  // 发请求下载图像和模型
+  try{
+    const imageResponse = await fetch(imageUrl);
+    const modelResponse = await fetch(modelUrl);
+
+    if (!imageResponse.ok || !modelResponse.ok){
+      ElMessage.error("下载失败");
+    }
+
+    // 获取文件的blob数据
+    const imageBlob = await imageResponse.blob();
+    const modelBlob = await modelResponse.blob();
+
+    // 创建url分别指向文件
+    const imageLink = document.createElement('a');
+    const modelLink = document.createElement('a');
+
+    imageLink.href = URL.createObjectURL(imageBlob);
+    modelLink.href = URL.createObjectURL(modelBlob);
+    imageLink.download = 'image.png';
+    modelLink.download = 'model.binvox';
+
+    // 触发点击事件
+    imageLink.click();
+    modelLink.click();
+
+    // 释放blob的url
+    URL.revokeObjectURL(imageLink.href);
+    URL.revokeObjectURL(modelLink.href);
+  }catch(error){
+    ElMessage.error("下载失败");
+  }
+}
+
 </script>
 
 <style lang="scss" scoped>
-.container{
+.container {
   width: 100%;
   height: 700px;
 }

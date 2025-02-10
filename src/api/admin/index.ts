@@ -4,7 +4,7 @@ import type { user, userInfoResponseData } from "./type";
 
 enum API{
     // 分页获取所有用户
-    GETUSER_URL = '/admin/getUserInfo/',
+    GETUSER_URL = '/admin/getUserInfo',
     // 改变用户角色类型
     CHANGEROLE_URL = '/admin/changeRole',
     // 删除用户

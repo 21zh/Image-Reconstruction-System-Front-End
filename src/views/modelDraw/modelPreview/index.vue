@@ -68,6 +68,7 @@ const handleModel = (file, fileList) => {
   fileLists.value = fileList;
   voxel.length = 0;
   try {
+    console.log(file);
     modelObserve(file, voxel, scene, grid_size, cube_size, reader, color.value);
     ElMessage({ type: 'success', message: '模型文件解析成功' });
   } catch (e) {

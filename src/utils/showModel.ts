@@ -184,7 +184,12 @@ export const modelObserve = (file: any, voxel: any[], scene: any, grid_size: any
     };
 
     // 开始读取文件
-    reader.readAsArrayBuffer(file.raw);
+    if(file.raw){
+      reader.readAsArrayBuffer(file.raw);  
+    }
+    else{
+        reader.readAsArrayBuffer(file);
+    }
 };
 
 export const init = (
