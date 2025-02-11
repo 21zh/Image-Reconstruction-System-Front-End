@@ -34,3 +34,12 @@ export type ForumDtoList = forumDto[];
 export interface ForumResponseData extends ResponseData{
     data:ForumDtoList
 }
+
+// 获取用户帖子接口的ts类型
+export interface UserForumResponseData extends ResponseData{
+  data:{
+    forumList:ForumDtoList,
+    allLikes:number,
+    allDownloads:number,
+  }
+}

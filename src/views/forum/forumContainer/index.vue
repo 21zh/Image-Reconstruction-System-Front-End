@@ -3,7 +3,7 @@
     <div class="article" v-for="(item, index) in props.forumList" :key="item.id" @click="showArticle(item)">
       <div class="leftContainer">
         <h1>{{ item.title }}</h1>
-        <div class="userContainer" @click.stop="searchUser" style="cursor:pointer">
+        <div class="userContainer" @click.stop="searchUser(item)" style="cursor:pointer">
           <el-avatar :src=item.avatar />
           <span class="userName">{{ item.userName }}</span>
         </div>
@@ -26,7 +26,10 @@ import { ref } from 'vue';
 import SockJS from 'sockjs-client';
 import Stomp from 'stompjs';
 import { fileDownload } from '../../../utils/fileDownload';
+import userStores from '../../../store/modules/user';
 
+// 获取用户对象
+let userStore = userStores();
 // 配置websocket端点
 let socket = new SockJS(import.meta.env.VITE_SERVE + '/ws');
 let stompClient = Stomp.over(socket);
@@ -79,11 +82,10 @@ const props = defineProps({
         typeof item.avatar === 'string' &&
         typeof item.motto === 'string' &&
         typeof item.createTime === 'string' &&
-        typeof item.updateTime === 'string'&&
         typeof item.ilike === 'boolean'
       )
     }
-  }
+  },
 });
 
 // 获取父组件的方法
@@ -91,7 +93,7 @@ let $emit = defineEmits(['showUserInfo', 'showArticle']);
 
 // 点赞或者取消点赞
 const likeClick = (item) => {
-  const Message = JSON.stringify({id: item.id,userId:item.userId,action: 'likes',iLike:item.ilike});
+  const Message = JSON.stringify({id: item.id,userName:userStore.userName,action: 'likes',iLike:item.ilike});
   stompClient.send('/forum/update', {}, Message);
 }
 
@@ -103,8 +105,8 @@ const downloadClick = (item) => {
 }
 
 // 查看用户按钮的回调
-const searchUser = () => {
-  $emit('showUserInfo');
+const searchUser = (item) => {
+  $emit('showUserInfo',item);
 }
 
 // 查看帖子内容

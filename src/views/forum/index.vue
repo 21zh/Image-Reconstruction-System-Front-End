@@ -1,9 +1,8 @@
 <template>
   <el-card>
     <div class="search">
-      <el-input placeholder="请输入关键词" style="width: 400px;margin-right: 10px;" v-model="keyWord"></el-input>
-      <el-button type="primary" size="default" :icon="Search" :disabled="keyWord ? false : true"
-        @click="getTypeForum(typeId)">搜索</el-button>
+      <el-input placeholder="请输入关键词" style="width: 400px;margin-right: 10px;" v-model="keyWord"
+        @blur="getTypeForum(typeId)"></el-input>
       <el-button type="primary" size="default" :icon="Upload" @click="postArticle">上传</el-button>
     </div>
     <div class="scrollbarContainer">
@@ -74,27 +73,30 @@
   <el-dialog v-model="userInfo" width="900" align-center>
     <div class="topContainer">
       <div class="userContainer" @click="searchUser" style="cursor:pointer">
-        <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" />
-        <span class="userName">用户</span>
+        <el-avatar :src=avatar />
+        <span class="userName" style="font-weight: 1000;">{{ userName }}</span>
+        <span style="margin-left: 30px;font-weight: 1000;">个性签名：</span>
+        <h1 style="font-weight: 3000; color: red;">{{ motto }}</h1>
       </div>
       <div class="likeAndDownload">
-        <el-badge :value="allLike" :max="999" class="item">
-          <svg-icon name="like" width="25px" height="25px" @click="likeClick"></svg-icon>
+        <el-badge :value="userForum.allLikes" :max="999" class="item">
+          <svg-icon name="like" width="25px" height="25px"></svg-icon>
         </el-badge>
-        <el-badge :value="allDownload" :max="999" class="item">
-          <svg-icon name="download" width="25px" height="25px" @click="downloadClick"></svg-icon>
+        <el-badge :value="userForum.allDownloads" :max="999" class="item">
+          <svg-icon name="download" width="25px" height="25px"></svg-icon>
         </el-badge>
       </div>
     </div>
     <el-divider>
       <el-icon><star-filled /></el-icon>
     </el-divider>
-    <forumContainer class="forums" @showUserInfo="showUserInfo" @showArticle="showArticle"></forumContainer>
+    <forumContainer class="forums" @showArticle="showArticle" :forumList="userForum.forumList">
+    </forumContainer>
   </el-dialog>
   <el-dialog v-model="articleContent" :title=title width="1300" align-center>
     <div class="modelDialog">
       <el-card class="picture">
-        <img :src=image alt="" style="width: 200px;height: 200px;"/>
+        <img :src=image alt="" style="width: 200px;height: 200px;" />
       </el-card>
       <el-card class="model">
         <div class="container" ref="container">
@@ -114,7 +116,7 @@ import imgContainer from './imgContainer/index.vue';
 import forumContainer from './forumContainer/index.vue';
 import Models from '@/views/models/index.vue';
 import { reqGetAllType } from '../../api/type';
-import { reqGetTypeForum, reqUploadForum } from '../../api/forum';
+import { reqGetTypeForum, reqGetUserForum, reqUploadForum } from '../../api/forum';
 import { ElMessage } from 'element-plus';
 import userStores from '../../store/modules/user';
 import { modelObserve } from '../../utils/showModel';
@@ -134,6 +136,11 @@ let title = ref('');
 // 图片和模型
 let image = ref('');
 let model = ref('');
+
+// 用户名和头像和个性签名
+let userName = ref('');
+let avatar = ref('');
+let motto = ref('');
 
 // 帖子表单对象
 let forumForm = reactive({
@@ -163,6 +170,8 @@ let keyWord = ref('');
 
 // 帖子数据数组
 let forumList = ref([]);
+// 用户帖子数组
+let userForumList = ref([]);
 
 // 控制上传帖子的弹窗
 let articlePost = ref(false);
@@ -183,6 +192,15 @@ let options = ref([]);
 let allLike = ref(0);
 // 总下载量
 let allDownload = ref(0);
+
+// 存储用户帖子的数据
+let userForum = ref(
+  {
+    forumList: [],
+    allLikes: 0,
+    allDownloads: 0,
+  }
+);
 
 // 定义表单校验规则
 const rules = {
@@ -228,7 +246,7 @@ const getAllType = async () => {
 // 获取类型下的帖子数据
 const getTypeForum = async (id) => {
   // 发起请求
-  let result = await reqGetTypeForum(id, keyWord.value);
+  let result = await reqGetTypeForum(id, keyWord.value, userStore.userName);
   // 成功
   if (result.code == 200) {
     forumList.value = result.data;
@@ -286,13 +304,22 @@ const postArticle = () => {
 }
 
 // 显示用户信息
-const showUserInfo = () => {
+const showUserInfo = async (item) => {
   // 显示用户信息
   userInfo.value = true;
+  // 发起请求查询
+  let result = await reqGetUserForum(item.userId, userStore.userName);
+  if (result.code == 200) {
+    userForum.value = result.data;
+    userForumList.value = result.data.forumList;
+    userName.value = item.userName;
+    avatar.value = item.avatar;
+    motto.value = item.motto;
+  }
 }
 
 // 显示帖子内容
-const showArticle = async(item) => {
+const showArticle = async (item) => {
   // 清空模型数据
   voxel.length = 0;
   // 赋值
