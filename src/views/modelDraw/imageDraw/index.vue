@@ -1,40 +1,65 @@
 <template>
   <el-card class="cardBox">
-    <el-upload class="upload-demo" drag multiple v-model="fileLists" :auto-upload="false" :on-change="handleModel"
-      :show-file-list="false">
-      <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-      <div class="el-upload__text">
-        拖拽文件或者 <em>点击上传</em>
-      </div>
-      <template #tip>
-        <div class="el-upload__tip">
-          文件类型必须为.binvox
+    <el-tabs type="border-card" class="demo-tabs">
+      <el-tab-pane>
+        <template #label>
+          <span class="custom-tabs-label">
+            <el-icon>
+              <Picture />
+            </el-icon>
+            <span>图片上传</span>
+          </span>
+        </template>
+        <el-upload class="upload-demo" action="/api/imageDraw/upload" drag multiple v-model="fileLists"
+          :show-file-list="false" :before-upload="beforeUpload" :on-success="handleImageSuccess" :on-progress="loadModel">
+          <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+          <div class="el-upload__text">
+            拖拽文件或者 <em>点击上传</em>
+          </div>
+          <template #tip>
+            <div class="el-upload__tip">
+              文件类型必须为文件夹
+            </div>
+          </template>
+        </el-upload>
+      </el-tab-pane>
+      <el-tab-pane>
+        <template #label>
+          <span class="custom-tabs-label">
+            <el-icon>
+              <Files />
+            </el-icon>
+            <span>文件夹上传</span>
+          </span>
+        </template>
+        <div class="file-upload-container">
+          <svg-icon name="fileUpload" width="100px" height="100px"></svg-icon>
+          <label for="fileUpload" class="custom-file-upload">
+            选择文件夹
+          </label>
+          <input type="file" id="fileUpload" class="file-input" webkitdirectory ref="fileUpload">
         </div>
-      </template>
-    </el-upload>
+      </el-tab-pane>
+    </el-tabs>
+
+
   </el-card>
   <el-card class="modelTable">
-    <el-table border :data="data" class="table">
-      <el-table-column type="selection"></el-table-column>
+    <el-table border :data="imageReconstruct" class="table">
       <el-table-column type="index" label="序号" fixed align="center" prop="id" width="80px"></el-table-column>
-      <el-table-column label="图片名称" align="center" prop="name"></el-table-column>
-      <el-table-column label="误差" align="center" prop="size" sortable>
+      <el-table-column label="图片名称" align="center" prop="imageName"></el-table-column>
+      <!-- <el-table-column label="误差" align="center" prop="size" sortable>
         <template #="{ row, $index }">
           <el-tag>{{ row.size }}</el-tag>
         </template>
-      </el-table-column>
-      <el-table-column align="center">
-        <template #header>
+      </el-table-column> -->
+      <el-table-column align="center" label="操作">
+        <!-- <template #header>
           <el-input v-model="keyPicture" size="small" placeholder="请输入图片名称" />
-        </template>
+        </template> -->
         <template #="{ row, $index }">
           <el-button type="primary" size="small" :icon="View" @click="showModel(row)">查看</el-button>
-          <el-button type="success" size="small" :icon="Download">下载</el-button>
-          <el-popconfirm title="您确定要删除该数据吗?" width="200">
-            <template #reference>
-              <el-button type="danger" size="small" :icon="Delete">删除</el-button>
-            </template>
-          </el-popconfirm>
+          <el-button type="success" size="small" :icon="Download" @click="downloadModel(row)">下载</el-button>
         </template>
       </el-table-column>
       <template #empty>
@@ -45,7 +70,7 @@
   <el-dialog v-model="modelView" title="三维模型预览" width="1500" align-center>
     <div class="modelDialog">
       <el-card class="picture">
-        <img src="@/assets/images/loginbg.gif" alt="">
+        <img :src=image style="width: 200px;height: 200px;" alt="">
       </el-card>
       <el-card class="model">
         <div class="container" ref="container">
@@ -65,6 +90,9 @@ import { ElMessage } from 'element-plus';
 import { onMounted, ref, watch } from 'vue';
 import { init, modelObserve } from '@/utils/showModel';
 import Models from '@/views/models/index.vue';
+import { reqFileUpload } from '../../../api/file';
+import { fileDownload } from '../../../utils/fileDownload';
+import { ElLoading } from 'element-plus';
 
 let reader = new FileReader();
 const grid_size = 32;
@@ -83,42 +111,123 @@ let keyPicture = ref('');
 
 // 上传的文件
 let fileLists = ref([]);
+let fileUpload = ref();
 
-// 虚拟数据
-let data = ref([
-  {
-    id: 1,
-    name: '3D模型',
-    img: 'https://img.alicdn.com/imgextra/i4/O1CN01KX2jqB1K5YJ8YJ1YH_!!6000000000080-2-tps-800-800.png',
-    time: '2023-06-01',
-  },
-]);
+// 图像数据
+let image = ref();
+
+// 图像重构收集数据
+let imageReconstruct = ref([]);
 
 onMounted(() => {
+  if (fileUpload.value) {
+    fileUpload.value.addEventListener("change", handleFileSelect);
+  }
 })
 
-// watch(container, (newValue) => {
-//   if (newValue) {
-//     init(container.value, grid_size, cube_size, scene, '#409EFF');
-//   }
-// });
-
-// 查看按钮的回调
-const showModel = (row) => {
-  modelView.value = true;
+// 文件上传前
+const beforeUpload = (file) => {
+  if (file.type !== 'image/jpeg' && file.type !== 'image/png') {
+    ElMessage.error('上传头像图片只能是 JPG/PNG 格式!');
+    return false;
+  } else if (file.size > 1024 * 1024 * 2) {
+    ElMessage.error('上传头像图片大小不能超过 2MB!');
+    return false;
+  }
+  return true;
 }
 
-onMounted(() => {
-});
+// 文件上传中
+const loadModel = () =>{
+  // 加载效果
+  const loadingInstance = ElLoading.service({
+      lock: true,
+      text: '模型构建中,请耐心等待',
+      background: 'rgba(0, 0, 0, 0.7)',
+    });
+}
 
-// 处理上传的文件回调
-const handleModel = () => {
+// 上传文件夹
+const handleFileSelect = async (event) => {
+  // 加载效果
+  const loadingInstance = ElLoading.service({
+      lock: true,
+      text: '模型构建中,请耐心等待',
+      background: 'rgba(0, 0, 0, 0.7)',
+    });
+  // 获取文件列表
+  const files = event.target.files;
+
+  // 创建 FormData 对象，用于封装文件数据
+  const formData = new FormData();
+
+  // 将所有选中的文件添加到 FormData
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    // 注意：文件会携带 webkitRelativePath 属性，用于保存文件的相对路径
+    formData.append("files", file, file.webkitRelativePath || file.name);
+  }
+  // 发请求
+  let result = await reqFileUpload(formData);
+  if (result.code === 200) {
+    imageReconstruct.value.push(...result.data);
+    // 提示信息
+    ElMessage.success("模型构建成功");
+  } else {
+    // 提示信息
+    ElMessage.error("模型构建失败");
+  }
+  // 加载完成
+  loadingInstance.close();
+}
+
+// 查看按钮的回调
+const showModel = async (row) => {
+  // 显示对话框
+  modelView.value = true;
+  image.value = row.imageUrl;
+  // 清空模型数据
+  voxel.length = 0;
+  // 显示对话框
+  modelView.value = true;
+  // 发送请求，解析模型数据
+  let response = await fetch(row.modelUrl);
+  // 解析并创建文件对象
+  let blob = await response.blob();
+  const file = new File([blob], row.modelUrl, {
+    type: 'application/octet-stream',
+  });
+  modelObserve(file, voxel, scene, grid_size, cube_size, reader, '#26CB1D');
+}
+
+// 下载模型
+const downloadModel = (row) => {
+  fileDownload('',row.modelUrl);
+}
+
+// 单张图片上传成功的回调
+const handleImageSuccess = (response) => {
+  // 加载效果
+  const loadingInstance = ElLoading.service({
+      lock: true,
+      text: '模型构建中,请耐心等待',
+      background: 'rgba(0, 0, 0, 0.7)',
+    });
+  // 上传单张图片重构成功
+  if (response.code === 200) {
+    imageReconstruct.value.push(response.data);
+    ElMessage.success("模型构建成功");
+  } else {
+    ElMessage.error("模型构建失败");
+  }
+  // 加载完成
+  loadingInstance.close();
 }
 </script>
 <style lang="scss" scoped>
 .cardBox {
   width: 100%;
-  height: 242px;
+  height: 300px;
   margin-bottom: 10px;
 }
 
@@ -165,5 +274,33 @@ const handleModel = () => {
     right: 10px;
     bottom: 10px;
   }
+}
+
+.file-input {
+  display: none;
+}
+
+.custom-file-upload {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 5px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s;
+}
+
+.custom-file-upload:hover {
+  background-color: #45a049;
+}
+
+.file-upload-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
 }
 </style>

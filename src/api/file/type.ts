@@ -11,3 +11,15 @@ export interface handDrawResponseData extends ResponseData {
         model: string,
     }
 }
+
+export interface imageDraw {
+    id: number,
+    imageName: string,
+    imageUrl:string,
+    modelUrl:string
+}
+
+// 图像重构的返回数据
+export interface imageDrawResponseData extends ResponseData {
+    data: imageDraw[]
+}
