@@ -30,6 +30,7 @@ export interface loginResponseData extends ResponseData{
 export interface userInfoResponseData extends ResponseData{
     userName:string,
     avatar:string,
-    motto:string
+    motto:string,
+    roleId:number
 }
 

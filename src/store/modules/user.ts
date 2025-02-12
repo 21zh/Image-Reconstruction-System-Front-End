@@ -3,7 +3,7 @@ import { defineStore } from 'pinia';
 // 引入数据类型
 import type { UserState } from '@/stores/interface';
 // 引入路由相关对象
-import { constantRoute } from '@/router/routers';
+import { adminRoute ,userRoute} from '@/router/routers';
 import type { loginForm, registerForm } from '@/api/user/type';
 import { reqLogin, reqRegister } from '@/api/user';
 import { SET_TOKEN } from '@/utils/token';
@@ -22,10 +22,12 @@ let userStores = defineStore('User', {
       avatar: '',
       // 个性签名
       motto: '',
+      // 用户对象
+      roleId:'',
       // token
       token: GET_TOKEN(),
       // 路由数据
-      menuRoutes: constantRoute,
+      menuRoutes: adminRoute,
     }
   },
   // 异步和逻辑处理
@@ -61,6 +63,9 @@ let userStores = defineStore('User', {
         this.userName = result.data.userName;
         this.avatar = result.data.avatar;
         this.motto = result.data.motto;
+        if(result.data.roleId === 1){
+          this.menuRoutes = userRoute;
+        }
         return 'ok';
       } else {
         return Promise.reject(new Error(result.message));
