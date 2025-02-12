@@ -8,7 +8,7 @@
     </el-steps>
     <div class="btnContainer">
       <el-button type="danger" size="default" :icon="Back" @click="backStep" :disabled="active == 0">回退</el-button>
-      <el-button type="primary" size="default" :icon="Right" @click="goStep" :disabled="active == 3">前进</el-button>
+      <el-button type="primary" size="default" :icon="Right" @click="goStep" :disabled="active > 2">前进</el-button>
       <el-button type="success" size="default" :icon="Download" @click="downloads"
         :disabled="active != 3">下载</el-button>
     </div>
@@ -29,7 +29,7 @@
             </el-popconfirm>
           </el-col>
           <el-col :span="4">
-            <el-button size="default" :icon="Download">导出</el-button>
+            <el-button size="default" :icon="Download" @click="exportImage">导出</el-button>
           </el-col>
           <el-col :span="4" style="margin-right: 30px;">
             <el-button size="default" :icon="textFlag ? EditPen : ToiletPaper" @click="penOrErase"
@@ -42,8 +42,7 @@
           </el-col>
         </el-row>
       </el-card>
-      <canvas class="handCanvas" :style="cursorStyle" id="myCanvas">
-
+      <canvas class="handCanvas" :style="cursorStyle" id="myCanvas" ref="canvas">
       </canvas>
     </el-card>
     <el-card>
@@ -66,6 +65,9 @@ import { Back, Right, Delete, Download, ToiletPaper, EditPen } from '@element-pl
 import { onMounted, ref, computed, nextTick, onBeforeUnmount } from 'vue';
 import Models from '@/views/models/index.vue';
 import { ElMessage } from 'element-plus';
+import { reqHandDrawImageUpload } from '../../../api/file';
+import { fileDownload } from '../../../utils/fileDownload';
+import { ElLoading } from 'element-plus';
 
 let reader = new FileReader();
 const grid_size = 32;
@@ -79,6 +81,11 @@ let camera, renderer; // 存储相机和渲染器
 let color = ref('#409EFF');
 // 存储模型的容器
 let container = ref();
+// 画板对象
+let canvas = ref();
+
+// 模型下载路径
+let modelPath = ref();
 
 // 控制步骤的索引
 let active = ref(0);
@@ -86,7 +93,7 @@ let active = ref(0);
 let textFlag = ref(false);
 // 动态更新鼠标样式
 let cursorStyle = ref({
-  cursor: `url(/src/assets/images/pen.ico), auto`
+  cursor: `url(/src/assets/images/pen.ico), auto`,
 });
 // 控制是否进行绘图
 let isDrawing = ref(false);
@@ -111,8 +118,34 @@ const resizeHandler = () => {
 onBeforeUnmount(() => {
 })
 
+// 上传手绘图片进行重构的方法
+const handDrawReconstruct = async (data) => {
+  let result = await reqHandDrawImageUpload(data);
+  // 请求成功
+  if (result.code == 200) {
+    modelPath.value = result.data;
+    // 解析模型
+    // 清空模型数据
+    voxel.length = 0;
+    // 发送请求，解析模型数据
+    let response = await fetch(result.data);
+    // 解析并创建文件对象
+    let blob = await response.blob();
+    const file = new File([blob], result.data, {
+      type: 'application/octet-stream',
+    });
+    modelObserve(file, voxel, scene, grid_size, cube_size, reader, '#26CB1D');
+    ElMessage({
+      type: 'success',
+      message: '构建模型成功'
+    })
+  } else {
+    ElMessage.error("手绘图片的模型重构失败");
+  }
+}
+
 // 前进按钮的回调
-const goStep = () => {
+const goStep = async () => {
   if (active.value === 0) {
     ElMessage({
       type: 'success',
@@ -122,12 +155,21 @@ const goStep = () => {
     ElMessage({
       type: 'success',
       message: '成功确认图像，进入下一步'
-    })
+    });
   } else {
-    ElMessage({
-      type: 'success',
-      message: '构建模型成功'
-    })
+    // 加载效果
+    const loadingInstance = ElLoading.service({
+      lock: true,
+      text: '模型构建中',
+      background: 'rgba(0, 0, 0, 0.7)',
+      target: document.getElementsByClassName('modelCanvas')[0],
+      fullscreen: false,  // 防止默认全屏加载
+    });
+    // 上传手绘图像
+    let handImage = canvas.value.toDataURL("image/png");
+    await handDrawReconstruct(handImage);
+    // 加载完成
+    loadingInstance.close();
   }
   active.value++;
 };
@@ -226,7 +268,19 @@ const clear = () => {
 
 // 下载模型
 const downloads = () => {
-  console.log('成功下载');
+  fileDownload('', modelPath.value);
+  active.value = 4;
+}
+
+// 导出图像
+const exportImage = () => {
+  // 获取画布元素
+  let hCanvas = document.getElementById('myCanvas');
+  let dataURL = hCanvas.toDataURL("image/png");
+  let link = document.createElement('a');
+  link.download = 'image.png';
+  link.href = dataURL;
+  link.click();
 }
 
 </script>
