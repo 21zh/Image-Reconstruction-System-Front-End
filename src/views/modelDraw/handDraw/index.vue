@@ -62,12 +62,17 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { init, modelObserve } from '@/utils/showModel';
 import { Back, Right, Delete, Download, ToiletPaper, EditPen } from '@element-plus/icons-vue';
-import { onMounted, ref, computed, nextTick, onBeforeUnmount } from 'vue';
+import { onMounted, ref, computed, nextTick, onBeforeUnmount, watch } from 'vue';
 import Models from '@/views/models/index.vue';
 import { ElMessage } from 'element-plus';
 import { reqHandDrawImageUpload } from '../../../api/file';
 import { fileDownload } from '../../../utils/fileDownload';
 import { ElLoading } from 'element-plus';
+import SockJS from 'sockjs-client';
+import Stomp from 'stompjs';
+import userStores from '../../../store/modules/user';
+import { userRoute } from '../../../router/routers';
+import { useRoute } from 'vue-router';
 
 let reader = new FileReader();
 const grid_size = 32;
@@ -103,12 +108,101 @@ let penWidth = ref(1);
 // 橡皮擦的大小
 let eraserWidth = ref(10);
 
+let userStore = userStores();
+
+let route = useRoute();
+
+// 配置websocket端点
+/* let socket = new SockJS(`${import.meta.env.VITE_SERVE}/ws?userId=${encodeURIComponent(userStore.userId)}`);
+let stompClient = Stomp.over(socket);
+
+stompClient.connect({}, () => {
+  stompClient.subscribe('/user/queue/reconstruct/handNotice', (reconstructMap) => {
+    // 解析对象
+    let updateReconstruct = JSON.parse(reconstructMap.body);
+    // 获取图像路径
+    let imagePaths = updateReconstruct.imagePath;
+    // 获取模型路径
+    let modelPaths = updateReconstruct.modelPath;
+
+    console.log(imagePaths);
+    console.log(modelPaths);
+
+    if (imagePaths) {
+      loadImageToCanvas(imagePaths);
+    }
+
+    if (modelPaths) {
+      handDrawModel(modelPaths);
+    }
+  });
+}); */
+
 // 挂载成功
 onMounted(() => {
   nextTick(() => {
     initHandCanvas();
   })
 })
+
+watch(() => route.query, async (newVal) => {
+  await nextTick();
+  // 获取路由参数
+  const {imagePaths, modelPaths} = newVal;
+
+  if (imagePaths) {
+      loadImageToCanvas(imagePaths);
+  }
+
+  if (modelPaths) {
+    handDrawModel(modelPaths);
+    active.value = 3;
+  }
+}, {immediate: true})
+
+// 加载图像
+function loadImageToCanvas(imagePath) {
+  const canvasContainer = canvas.value;
+  if (!canvasContainer) {
+    return;
+  }
+
+  const ctx = canvasContainer.getContext('2d');
+
+  const image = new Image();
+  image.crossOrigin = "anonymous";
+  image.src = imagePath;
+
+  image.onload = () => {
+    canvasContainer.width = image.width;
+    canvasContainer.height = image.height;
+    ctx.drawImage(image, 0, 0);
+  };
+
+  image.onerror = () => {
+    console.error('图片加载失败');
+  };
+};
+
+// 加载模型
+async function handDrawModel(modelPaths) {
+  modelPath.value = modelPaths;
+  // 解析模型
+  // 清空模型数据
+  voxel.length = 0;
+  // 发送请求，解析模型数据
+  let response = await fetch(modelPaths);
+  // 解析并创建文件对象
+  let blob = await response.blob();
+  const file = new File([blob], modelPaths, {
+    type: 'application/octet-stream',
+  });
+  modelObserve(file, voxel, scene, grid_size, cube_size, reader, '#26CB1D');
+  ElMessage({
+    type: 'success',
+    message: '构建模型成功'
+  })
+}
 
 // 窗口变化函数调用
 const resizeHandler = () => {
@@ -123,7 +217,7 @@ const handDrawReconstruct = async (data) => {
   let result = await reqHandDrawImageUpload(data);
   // 请求成功
   if (result.code == 200) {
-    modelPath.value = result.data;
+    /* modelPath.value = result.data;
     // 解析模型
     // 清空模型数据
     voxel.length = 0;
@@ -134,13 +228,13 @@ const handDrawReconstruct = async (data) => {
     const file = new File([blob], result.data, {
       type: 'application/octet-stream',
     });
-    modelObserve(file, voxel, scene, grid_size, cube_size, reader, '#26CB1D');
+    modelObserve(file, voxel, scene, grid_size, cube_size, reader, '#26CB1D'); */
     ElMessage({
       type: 'success',
-      message: '构建模型成功'
+      message: '手绘图像上传成功'
     })
   } else {
-    ElMessage.error("手绘图片的模型重构失败");
+    ElMessage.error("手绘图片上传失败");
   }
 }
 

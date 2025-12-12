@@ -47,7 +47,6 @@ stompClient.connect({}, () => {
       post.likes = updateLikes.likes;
       post.ilike = !post.ilike;
     }
-
   });
   stompClient.subscribe('/forum/downloads', (downloadMap) => {
     // 解析对象
@@ -59,7 +58,7 @@ stompClient.connect({}, () => {
       // 更新下载量
       post.downloads = updateDownloads.downloads;
     }
-  });
+  }); 
 });
 
 // 接收父组件传递过来的帖子数据

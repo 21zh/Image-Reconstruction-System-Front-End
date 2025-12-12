@@ -21,6 +21,13 @@ import pinia from '@/store'
 import 'element-plus/theme-chalk/dark/css-vars.css'
 // 引入路由鉴权文件
 import './permission';
+// 引入持久化插件
+import persist from 'pinia-plugin-persistedstate';
+// 引入用户仓库、websocket连接
+import userStores from './store/modules/user'
+import { connectWebsocket } from './websocket'
+
+
 // 获取应用实例对象
 const app = createApp(App)
 app.use(ElementPlus, {
@@ -35,8 +42,14 @@ app.use(globalComponent)
 // 注册模板路由
 app.use(router)
 
+pinia.use(persist)
 // 安装pinia仓库
 app.use(pinia)
 
 // 将应用挂载到容器中
 app.mount('#app')
+
+const userStore = userStores();
+userStore.userPart().then(() => {
+  connectWebsocket(userStore.userId);
+})

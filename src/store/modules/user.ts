@@ -16,6 +16,8 @@ let userStores = defineStore('User', {
   // 存储数据
   state: (): UserState => {
     return {
+      // 用户id
+      userId: '',
       // 用户名
       userName: '',
       // 头像
@@ -60,6 +62,7 @@ let userStores = defineStore('User', {
       let result = await reqGetUserPart();
       // 请求成功，属性赋值
       if (result.code === 200) {
+        this.userId = result.data.id;
         this.userName = result.data.userName;
         this.avatar = result.data.avatar;
         this.motto = result.data.motto;
@@ -78,6 +81,7 @@ let userStores = defineStore('User', {
       // 2.判断是否成功
       // 3.如果成功，清除token
       REMOVE_TOKEN();
+      this.userId = '';
       this.token = '';
       // 清除数据
       this.username = '';
@@ -87,7 +91,8 @@ let userStores = defineStore('User', {
         ElMessage.success(result.message);
       }
     }
-  }
+  },
+  persist: true
 })
 
 // 对外暴露用户的小仓库

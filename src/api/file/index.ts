@@ -4,7 +4,7 @@ import type { handDrawResponseData, imageDrawResponseData } from './type';
 
 enum API {
   // 上传手绘图片的地址
-  HANDUPLOAD_URL = '/handDraw/handUpload',
+  HANDUPLOAD_URL = '/handDraw/handReconstruct',
   // 上传文件夹的地址
   FILEUPLOAD_URL = '/imageDraw/fileUpload'
 }
