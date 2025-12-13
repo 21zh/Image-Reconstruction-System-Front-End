@@ -10,7 +10,7 @@
             <span>图片上传</span>
           </span>
         </template>
-        <el-upload class="upload-demo" action="/api/imageDraw/upload" drag multiple v-model="fileLists"
+        <el-upload class="upload-demo" action="/api/imageDraw/imageReconstruct" :headers="{ token: userStore.token }" drag multiple v-model="fileLists"
           :show-file-list="false" :before-upload="beforeUpload" :on-success="handleImageSuccess" :on-progress="loadModel">
           <el-icon class="el-icon--upload"><upload-filled /></el-icon>
           <div class="el-upload__text">
@@ -93,6 +93,8 @@ import Models from '@/views/models/index.vue';
 import { reqFileUpload } from '../../../api/file';
 import { fileDownload } from '../../../utils/fileDownload';
 import { ElLoading } from 'element-plus';
+import { useRoute } from 'vue-router';
+import userStores from '../../../store/modules/user';
 
 let reader = new FileReader();
 const grid_size = 32;
@@ -119,11 +121,26 @@ let image = ref();
 // 图像重构收集数据
 let imageReconstruct = ref([]);
 
+let route = useRoute();
+let userStore = userStores();
+
 onMounted(() => {
   if (fileUpload.value) {
     fileUpload.value.addEventListener("change", handleFileSelect);
   }
 })
+
+watch(() => route.query.updateReconstruct, (val) => {
+  if (!val) { 
+    return;
+  }
+  // 获取路由参数
+  const updateReconstruct = JSON.parse(val);
+
+  if (updateReconstruct) {
+    imageReconstruct.value.push(...updateReconstruct);
+  }
+}, {immediate: true})
 
 // 文件上传前
 const beforeUpload = (file) => {
@@ -183,18 +200,20 @@ const handleFileSelect = async (event) => {
 
 // 查看按钮的回调
 const showModel = async (row) => {
+  console.log(row.imagePath);
+  console.log(row.modelPath);
   // 显示对话框
   modelView.value = true;
-  image.value = row.imageUrl;
+  image.value = row.imagePath;
   // 清空模型数据
   voxel.length = 0;
   // 显示对话框
   modelView.value = true;
   // 发送请求，解析模型数据
-  let response = await fetch(row.modelUrl);
+  let response = await fetch(row.modelPath);
   // 解析并创建文件对象
   let blob = await response.blob();
-  const file = new File([blob], row.modelUrl, {
+  const file = new File([blob], row.modelPath, {
     type: 'application/octet-stream',
   });
   modelObserve(file, voxel, scene, grid_size, cube_size, reader, '#26CB1D');
@@ -202,7 +221,7 @@ const showModel = async (row) => {
 
 // 下载模型
 const downloadModel = (row) => {
-  fileDownload('',row.modelUrl);
+  fileDownload('',row.modelPath);
 }
 
 // 单张图片上传成功的回调
@@ -215,10 +234,10 @@ const handleImageSuccess = (response) => {
     });
   // 上传单张图片重构成功
   if (response.code === 200) {
-    imageReconstruct.value.push(response.data);
-    ElMessage.success("模型构建成功");
+    // imageReconstruct.value.push(response.data);
+    ElMessage.success("文件上传成功");
   } else {
-    ElMessage.error("模型构建失败");
+    ElMessage.error("文件上传失败");
   }
   // 加载完成
   loadingInstance.close();
