@@ -138,7 +138,7 @@ watch(() => route.query.updateReconstruct, (val) => {
   const updateReconstruct = JSON.parse(val);
 
   if (updateReconstruct) {
-    imageReconstruct.value.push(...updateReconstruct);
+    imageReconstruct.value.push(updateReconstruct);
   }
 }, {immediate: true})
 
@@ -187,12 +187,12 @@ const handleFileSelect = async (event) => {
   // 发请求
   let result = await reqFileUpload(formData);
   if (result.code === 200) {
-    imageReconstruct.value.push(...result.data);
+    // imageReconstruct.value.push(...result.data);
     // 提示信息
-    ElMessage.success("模型构建成功");
+    ElMessage.success("文件夹上传成功");
   } else {
     // 提示信息
-    ElMessage.error("模型构建失败");
+    ElMessage.error("文件夹上传失败");
   }
   // 加载完成
   loadingInstance.close();

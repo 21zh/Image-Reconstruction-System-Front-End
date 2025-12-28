@@ -23,3 +23,34 @@ export interface imageDraw {
 export interface imageDrawResponseData extends ResponseData {
     data: imageDraw[]
 }
+
+export interface roomResponseData {
+    roomId : string,
+    roomName : string,
+    isPublic : boolean,
+    users : string[],
+    maxUser : number,
+    isOwner : boolean
+}
+
+// 房间创建的返回数据
+export interface createRoomResponseData extends ResponseData {
+    data: string
+}
+
+// 获取房间列表的返回数据
+export interface getRoomResponseData extends ResponseData {
+    data: roomResponseData[]
+}
+
+export interface operation {
+    lineWidth: number,
+    type: string,
+    opearteTime: string,
+    points: string
+}
+
+// 获取房间操作信息的返回数据
+export interface getRoomOperationResponseData extends ResponseData {
+    data: operation[]
+}

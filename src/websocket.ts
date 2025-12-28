@@ -34,12 +34,6 @@ export function connectWebsocket(userId : string) {
             stompClient.subscribe('/user/queue/reconstruct/imageNotice', (reconstructMap: any) => {
               // 解析对象
               let updateReconstruct = JSON.parse(reconstructMap.body);
-              // 获取图像路径
-              let imagePaths = updateReconstruct.imagePath;
-              // 获取模型路径
-              let modelPaths = updateReconstruct.modelPath;
-              // 获取图像名称
-              let imageName = updateReconstruct.imageName;
 
               router.push({
                 path: '/modelDraw/imageDraw',
