@@ -41,7 +41,7 @@
         </el-select>
       </el-form-item>
       <el-form-item label="图像" prop="image">
-        <el-upload action="api/forum/imageUpload" list-type="picture-card" :limit="1" :before-upload="beforeImageUpload"
+        <el-upload action="api/forum/imageUpload" list-type="picture-card" :headers="{ token: userStore.token }" :limit="1" :before-upload="beforeImageUpload"
           :on-success="handleImageSuccess">
           <el-icon>
             <Plus />
@@ -49,7 +49,7 @@
         </el-upload>
       </el-form-item>
       <el-form-item label="模型" prop="model">
-        <el-upload class="upload-demo" drag action="api/forum/modelUpload" :limit="1" style="width: 400px;"
+        <el-upload class="upload-demo" :headers="{ token: userStore.token }" drag action="api/forum/modelUpload" :limit="1" style="width: 400px;"
           :before-upload="beforeModelUpload" :on-success="handleModelSuccess">
           <el-icon class="el-icon--upload"><upload-filled /></el-icon>
           <div class="el-upload__text">
@@ -207,7 +207,7 @@ const rules = {
   title: [{ required: true, trigger: 'blur', min: 2, max: 10, message: '请输入2-10字数的标题' }],
   typeId: [{ required: true, trigger: 'blur', message: '请选择分类' }],
   image: [{ required: true, trigger: 'blur', message: '请上传图片' }],
-  model: [{ required: true, trigger: 'blur', min: 5, max: 100, message: '请上传模型' }]
+  model: [{ required: true, trigger: 'blur', message: '请上传模型' }]
 }
 
 // 组件挂载成功发请求
@@ -328,6 +328,7 @@ const showArticle = async (item) => {
   model.value = item.model;
   // 显示帖子内容
   articleContent.value = true;
+  console.log(model.value);
   // 发送请求，解析模型数据
   let response = await fetch(model.value);
   // 解析并创建文件对象

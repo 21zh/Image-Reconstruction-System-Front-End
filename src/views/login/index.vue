@@ -220,7 +220,6 @@ const registerUser = () => {
       let userInfo = Object.assign(loginForm, userInfoForm);
       // 发送请求
       let result = await userStore.userRegister(userInfo);
-      console.log(result);
       if (result == 200) {
         // 关闭对话框
         centerDialogVisible.value = false;
@@ -230,8 +229,8 @@ const registerUser = () => {
       } else {
         ElMessage.error('信息错误，注册失败');
       }
-      isRegister.value = false;
     }
+    isRegister.value = false;
   })
 }
 

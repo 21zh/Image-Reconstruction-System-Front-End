@@ -1,6 +1,6 @@
 <template>
   <el-card class="cardBox">
-    <el-upload class="upload-demo" drag multiple v-model="fileLists" :auto-upload="false" :on-change="handleModel"
+    <el-upload class="upload-demo" :headers="{ token: userStore.token }" drag multiple v-model="fileLists" :auto-upload="false" :on-change="handleModel"
       :show-file-list="false">
       <el-icon class="el-icon--upload"><upload-filled /></el-icon>
       <div class="el-upload__text">
@@ -32,6 +32,7 @@ import { init, modelObserve } from '@/utils/showModel';
 import { ref, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import Models from '@/views/models/index.vue';
+import userStores from '../../../store/modules/user';
 
 let reader = new FileReader();
 const grid_size = 32;
@@ -45,6 +46,7 @@ let color = ref('#409EFF');
 let container = ref();
 // 上传的binvox文件列表
 let fileLists = ref([]);
+let userStore = userStores();
 
 // onMounted(() => {
 //   if (container.value) {

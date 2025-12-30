@@ -200,8 +200,6 @@ const handleFileSelect = async (event) => {
 
 // 查看按钮的回调
 const showModel = async (row) => {
-  console.log(row.imagePath);
-  console.log(row.modelPath);
   // 显示对话框
   modelView.value = true;
   image.value = row.imagePath;
