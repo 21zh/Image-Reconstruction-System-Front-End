@@ -43,3 +43,18 @@ export interface UserForumResponseData extends ResponseData{
     allDownloads:number,
   }
 }
+// 评论类型
+interface Comment{
+  id?:number,
+  forumId:number,
+  userId:number,
+  userName:string,
+  userAvatar:string,
+  commentMsg:string,
+  createTime?:string
+}
+
+// 获取评论详情接口的ts类型
+export interface CommentResponseData extends ResponseData{
+  data: Comment[]
+}
