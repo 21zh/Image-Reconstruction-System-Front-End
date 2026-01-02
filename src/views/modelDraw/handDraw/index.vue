@@ -7,6 +7,8 @@
       <el-step title="导出模型" />
     </el-steps>
     <div class="btnContainer">
+      <el-button type="warning" size="default" :icon="Cpu" :disabled="active != 0 || !currentRoom.isOwner"
+        @click="aiOpearte">AI协作</el-button>
       <el-button type="danger" size="default" :icon="Back" @click="backStep"
         :disabled="active == 0 || (currentRoom.id != '' && !currentRoom.isOwner)">回退</el-button>
       <el-button type="primary" size="default" :icon="Right" @click="goStep"
@@ -123,6 +125,29 @@
     </el-form>
   </el-dialog>
 
+  <el-dialog v-model="isAI" title="AI协作" width="600px" align-center>
+    <el-form :model="aiForm" label-width="auto">
+
+      <el-form-item label="请输入所需的图像信息">
+        <el-input v-model="aiForm.prompt" />
+      </el-form-item>
+
+      <el-form-item label="请输入禁止的图像信息">
+        <el-input v-model="aiForm.negativePrompt" />
+      </el-form-item>
+
+      <el-form-item label="是否基于图像生成">
+        <el-switch v-model="aiForm.isImage" />
+      </el-form-item>
+
+      <el-form-item>
+        <el-button type="primary" :disabled="aiForm.prompt == ''" @click="aiHelp(aiInfo)">确认</el-button>
+        <el-button @click="isAI = false">取消</el-button>
+      </el-form-item>
+
+    </el-form>
+  </el-dialog>
+
   <el-drawer v-model="drawer" size="400px" :with-header="false">
     <!-- 标题 -->
     <div class="drawer-title">手绘房间列表</div>
@@ -151,7 +176,7 @@
         <div class="room-users">
           <div v-for="i in room.maxUser" :key="i" class="user-circle">
             <template v-if="room.users[i - 1]">
-              <el-avatar :size="32" :src="room.users[i - 1].avatar" />
+              <el-avatar :size="32" :src="room.users[i - 1]" />
             </template>
             <template v-else>
               <el-icon>
@@ -170,13 +195,13 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { init, modelObserve } from '@/utils/showModel';
-import { Back, Right, Delete, Download, ToiletPaper, EditPen, HomeFilled, View } from '@element-plus/icons-vue';
+import { Back, Right, Delete, Download, ToiletPaper, EditPen, HomeFilled, View, Cpu } from '@element-plus/icons-vue';
 import { onMounted, ref, computed, nextTick, onBeforeUnmount, watch, reactive } from 'vue';
 import Models from '@/views/models/index.vue';
 import { ElMessage } from 'element-plus';
 import {
   reqCreateRoom, reqHandDrawImageUpload, reqLeaveRoom, reqGetRoom, reqEnterRoom, reqGetRoomInfo,
-  reqUploadOperation, reqGetOperation
+  reqUploadOperation, reqGetOperation, reqAICooperation
 } from '../../../api/file';
 import { fileDownload } from '../../../utils/fileDownload';
 import { ElLoading } from 'element-plus';
@@ -256,6 +281,10 @@ const connectDrawWs = () => {
       case 'clearImage':
         clearCanvas();
         break;
+      case 'aiHelp':
+        loadImageToCanvas(data.imagePath);
+        ElMessage.success('AI协作图像成功');
+        break;
       default:
         console.error('未知的绘图类型');
     }
@@ -284,6 +313,20 @@ let roomInfo = ref({
   maxUser: 1,
 });
 
+let isAI = ref(false);
+let aiForm = reactive({
+  prompt: '',
+  negativePrompt: '',
+  isImage: false,
+})
+let aiInfo = ref({
+  userId: userStore.userId,
+  prompt: '',
+  negativePrompt: '',
+  isImage: false,
+  imagePath: ''
+});
+
 
 let currentRoom = ref({
   id: '',
@@ -301,6 +344,43 @@ const roomForm = reactive({
   maxUser: 1,
   isPublic: false,
 })
+
+const aiOpearte = () => {
+  aiForm = reactive({
+    prompt: '',
+    negativePrompt: '',
+    isImage: false,
+  });
+  aiInfo = {
+    userId: userStore.userId,
+    prompt: '',
+    negativePrompt: '',
+    isImage: false,
+    imagePath: ''
+  };
+  isAI.value = true;
+}
+
+// 发起ai协作请求
+const aiHelp = async (aiInfo) => {
+  aiInfo.prompt = aiForm.prompt;
+  aiInfo.negativePrompt = aiForm.negativePrompt;
+  aiInfo.isImage = aiForm.isImage;
+
+  if (aiInfo.isImage) {
+    let hCanvas = document.getElementById('myCanvas');
+    let dataURL = hCanvas.toDataURL("image/png");
+    aiInfo.imagePath = dataURL;
+  }
+  let result = await reqAICooperation(aiInfo);
+
+  if (result.code == 200) {
+    ElMessage.success('AI协作任务上传成功');
+    isAI.value = false;
+  } else {
+    ElMessage.error('AI协作任务上传失败');
+  }
+}
 
 // 创建房间
 const onSubmit = async (data) => {
@@ -449,12 +529,14 @@ const enterRooms = async (data) => {
 
 
 // 挂载成功
-onMounted(async() => {
+onMounted(async () => {
   await nextTick();
-  initHandCanvas();  
+  initHandCanvas();
   await getRoomInfo();
-  await getRoomHistory();
-  connectDrawWs();
+  if (currentRoom.value.id != '') {
+    await getRoomHistory();
+    connectDrawWs();
+  }
 })
 
 watch(() => route.query, async (newVal) => {
@@ -471,6 +553,15 @@ watch(() => route.query, async (newVal) => {
         type: 'reconstruct',
         imagePath: imagePaths,
         modelPath: modelPaths
+      }));
+    }
+  } else if (imagePaths) {
+    clearCanvas();
+    loadImageToCanvas(imagePaths);
+    if (currentRoom.value.id != '') {
+      sendWhenReady(JSON.stringify({
+        type: 'aiHelp',
+        imagePath: imagePaths,
       }));
     }
   }

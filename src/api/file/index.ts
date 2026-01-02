@@ -22,6 +22,8 @@ enum API {
   UPLOADOPERATION_URL = '/room/uploadOperation',
   // 获取操作记录的地址
   GETOPERATION_URL = '/room/getOperation',
+  // 请求ai协作的地址
+  AI_COOPERATION_URL = '/handDraw/aiCooperation',
 }
 
 // 手绘图片上传的接口
@@ -84,5 +86,13 @@ export const reqUploadOperation = (data:any) =>{
 
 // 获取房间操作记录的接口
 export const reqGetOperation = (userId:String, roomId:String) => request.get<any,getRoomOperationResponseData>(API.GETOPERATION_URL + `?userId=${userId}&roomId=${roomId}`);
+
+// AI协作的接口
+export const reqAICooperation = (data:any) =>{
+  return request.post<any,ResponseData>(API.AI_COOPERATION_URL,data,{
+    headers:{"Content-Type":"application/json"},
+    timeout:50000
+  })
+}
 
 

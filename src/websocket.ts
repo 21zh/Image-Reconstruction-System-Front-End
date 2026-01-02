@@ -44,7 +44,22 @@ export function connectWebsocket(userId : string) {
                 // 跳转成功后执行
                 ElMessage.success('三维重建完毕');
               })
-            })
+            });
+            stompClient.subscribe('/user/queue/reconstruct/aiNotice', (reconstructMap: any) => {
+              // 解析对象
+              let updateReconstruct = JSON.parse(reconstructMap.body);
+
+              router.push({
+                path: '/modelDraw/handDraw',
+                query: {
+                  imagePaths: updateReconstruct.imagePath,
+                  modelPaths: updateReconstruct.modelPath,
+                },
+              }).then(() => {
+                // 跳转成功后执行
+                ElMessage.success('AI协作完毕');
+              })
+            });
           });
     }
     return stompClient;
